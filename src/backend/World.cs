@@ -57,6 +57,20 @@ public static partial class Module
         world.Tick++;
         ctx.Db.World.Id.Update(world);
 
+        foreach (var enemy in ctx.Db.Enemy.Iter())
+        {
+            if (!enemy.IsDead)
+                MoveEnemyTowardCore(ctx, enemy.Id);
+        }
+
+        if (world.Tick % (int)(1f / world.SpawnRate) == 0)
+        {
+            for (int i = 0; i < world.CurrentWave; i++)
+            {
+                SpawnEnemy(ctx, 100 + world.Tick , 5 + world.Tick, 5 + world.Tick, 1);
+            }
+        }
+
         Log.Info($"World tick updated: {world.Tick}");
     }
 
@@ -136,7 +150,7 @@ public static partial class Module
 
         if (dist < 0.1f)
         {
-            Log.Info($"{enemy.Name} reached the core!");
+            Log.Info($"{enemy.Id} reached the core!");
             return;
         }
 
@@ -156,7 +170,7 @@ public static partial class Module
             {
                 // Attack block instead of moving
                 DamageBlock(ctx, block.Id, enemy.Attack);
-                Log.Info($"{enemy.Name} attacked block {block.Id} at ({block.X},{block.Y})");
+                Log.Info($"{enemy.Id} attacked block {block.Id} at ({block.X},{block.Y})");
                 return;
             }
         }
@@ -167,6 +181,6 @@ public static partial class Module
         ctx.Db.Enemy.Id.Update(enemy);
 
         // Broadcast position for frontend (via websocket subscription)
-        Log.Info($"{enemy.Name} moved to ({enemy.X}, {enemy.Y})");
+        Log.Info($"{enemy.Id} moved to ({enemy.X}, {enemy.Y})");
     }
 }

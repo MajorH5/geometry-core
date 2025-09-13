@@ -45,19 +45,19 @@ public static partial class Module
         float clampedX = Math.Clamp(newX, -world.Width / 2, world.Width / 2);
         float clampedY = Math.Clamp(newY, -world.Height / 2, world.Height / 2);
 
-        // // Check collision with blocks
-        // foreach (var block in ctx.Db.Block.All())
-        // {
-        //     if (block.IsDestroyed) continue;
+        // Check collision with blocks
+        foreach (var block in ctx.Db.Block.Iter())
+        {
+            if (block.IsDestroyed) continue;
 
-        //     // Assuming players and blocks occupy integer grid positions
-        //     if (MathF.Abs(block.X - clampedX) < 1 &&
-        //         MathF.Abs(block.Y - clampedY) < 1)
-        //     {
-        //         Log.Info($"{player.Name} cannot move to ({clampedX}, {clampedY}) - blocked by Block {block.Id}");
-        //         return; // Cancel movement
-        //     }
-        // }
+            // Assuming players and blocks occupy integer grid positions
+            if (MathF.Abs(block.X - clampedX) < 1 &&
+                MathF.Abs(block.Y - clampedY) < 1)
+            {
+                Log.Info($"{player.Name} cannot move to ({clampedX}, {clampedY}) - blocked by Block {block.Id}");
+                return; // Cancel movement
+            }
+        }
 
         // Update player position if not blocked
         player.X = clampedX;
@@ -87,7 +87,7 @@ public static partial class Module
     }
 
     [Reducer(ReducerKind.ClientConnected)]
-    public static void ClientConnected(ReducerContext ctx)
+    public static void ClientConnected(ReducerContext ctx, string Username)
     {
         Log.Info($"Connect {ctx.Sender}");
 
@@ -103,7 +103,7 @@ public static partial class Module
         {
             ctx.Db.Player.Insert(new Player
             {
-                Name = $"Player_{ctx.Sender}",
+                Name = Username,
                 Identity = ctx.Sender,
                 Health = 100,
                 Speed = 10,
