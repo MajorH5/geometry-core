@@ -7,6 +7,19 @@ public static partial class Module
     public static class EnemyTypeIds
     {
         public const int SPIKER = 1;
+        public const int ENEMY2 = 2;
+    }
+    
+    [SpacetimeDB.Type]
+    public partial struct ProjectileInfo
+    {
+        public int Amount; // number of projectiles
+        public int Speed; // speed of each
+        public int Size; // size of projectile in pixels
+        public int Damage; // dmg each shot does
+        public int Spread; // spread between each shot
+        public string Color; // color of each shot
+        public int RateOfFire; // amount of shots taken per second
     }
 
     [Table(Name = "EnemyType", Public = true)]
@@ -14,11 +27,10 @@ public static partial class Module
     {
         [PrimaryKey]
         public int TypeId;
-        public string Name;
         public int MaxHealth;
         public int Speed;
         public float Size;
-        public string Color;
+        public ProjectileInfo ProjectileInfo;
     }
 
     public static long GenerateRandomLong()
@@ -37,15 +49,40 @@ public static partial class Module
             return;
         }
 
-        // Basic enemies
         ctx.Db.EnemyType.Insert(new EnemyType
         {
             TypeId = EnemyTypeIds.SPIKER,
-            Name = "Spiker",
             MaxHealth = 25,
             Speed = 3,
             Size = 60,
-            Color = "#00ff00",
+            ProjectileInfo = new ProjectileInfo
+            {
+                Amount = 1,
+                Speed = 6,
+                Size = 10,
+                Damage = 10,
+                Spread = 0,
+                Color = "#ff0000",
+                RateOfFire = 1,
+            }
+        });
+
+        ctx.Db.EnemyType.Insert(new EnemyType
+        {
+            TypeId = EnemyTypeIds.ENEMY2,
+            MaxHealth = 35,
+            Speed = 4,
+            Size = 70,
+            ProjectileInfo = new ProjectileInfo
+            {
+                Amount = 3,
+                Speed = 2,
+                Size = 30,
+                Damage = 10,
+                Spread = 0,
+                Color = "#ff0000",
+                RateOfFire = 1,
+            }
         });
 
         Log.Info("Enemy types initialized successfully");
@@ -75,35 +112,34 @@ public static partial class Module
     // ---------------- Reducers ----------------
 
     [Reducer]
-    public static void SpawnEnemy(ReducerContext ctx, int typeId, int posX, int posY, int difficultyMultiplier = 1)
+    public static void SpawnEnemy(ReducerContext ctx, int typeId, float posX, float posY, int difficultyMultiplier = 1)
     {
         var world = ctx.Db.World.Id.Find(1);
 
-        Random rand = new Random();
+        float x = posX;
+        float y = posY;
 
-        int edge = rand.Next(0, 4);
-        float x = 0;
-        float y = 0;
-
-        switch (edge)
-        {
-            case 0: // Left
-                x = -world.Width / 2f;
-                y = (float)(rand.NextDouble() * world.Height - world.Height / 2f);
-                break;
-            case 1: // Right
-                x = world.Width / 2f;
-                y = (float)(rand.NextDouble() * world.Height - world.Height / 2f);
-                break;
-            case 2: // Top
-                y = world.Height / 2f;
-                x = (float)(rand.NextDouble() * world.Width - world.Width / 2f);
-                break;
-            case 3: // Bottom
-                y = -world.Height / 2f;
-                x = (float)(rand.NextDouble() * world.Width - world.Width / 2f);
-                break;
-        }
+        // Random rand = new Random();
+        // int edge = rand.Next(0, 4);
+        // switch (edge)
+        // {
+        //     case 0: // Left
+        //         x = -world.Width / 2f;
+        //         y = (float)(rand.NextDouble() * world.Height - world.Height / 2f);
+        //         break;
+        //     case 1: // Right
+        //         x = world.Width / 2f;
+        //         y = (float)(rand.NextDouble() * world.Height - world.Height / 2f);
+        //         break;
+        //     case 2: // Top
+        //         y = world.Height / 2f;
+        //         x = (float)(rand.NextDouble() * world.Width - world.Width / 2f);
+        //         break;
+        //     case 3: // Bottom
+        //         y = -world.Height / 2f;
+        //         x = (float)(rand.NextDouble() * world.Width - world.Width / 2f);
+        //         break;
+        // }
 
         var enemyType = ctx.Db.EnemyType.TypeId.Find(typeId);
         int scaledHealth = (int)(enemyType.MaxHealth * difficultyMultiplier);
@@ -123,7 +159,6 @@ public static partial class Module
             Y = y
         });
 
-        Log.Info($"Spawned {enemyType.Name} enemy (#{enemy.Id}) with {enemy.Health} HP at ({x:F1}, {y:F1})");
     }
 
     [Reducer]

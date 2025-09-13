@@ -135,54 +135,6 @@ export const Spiker = (function () {
                 context.fill();
             }
 
-            // Attack indicator when attacking
-            if (this.attackAngle !== undefined && this.attackAngle !== -1) {
-                const attackDirection = new Vector2(Math.cos(this.attackAngle), Math.sin(this.attackAngle));
-
-                // Warning beam
-                const beamLength = baseSize * 3;
-                const beamStartX = centerX + attackDirection.x * (baseSize * 0.5);
-                const beamStartY = centerY + attackDirection.y * (baseSize * 0.5);
-                const beamEndX = centerX + attackDirection.x * beamLength;
-                const beamEndY = centerY + attackDirection.y * beamLength;
-
-                // Animated warning beam
-                const beamPulse = Math.sin(time * 8) * 0.5 + 0.5;
-                const beamWidth = (8 + beamPulse * 6) * scale;
-
-                context.globalAlpha = 0.7;
-                context.strokeStyle = '#FF4444';
-                context.lineWidth = beamWidth;
-                context.beginPath();
-                context.moveTo(beamStartX, beamStartY);
-                context.lineTo(beamEndX, beamEndY);
-                context.stroke();
-
-                // Beam center line
-                context.strokeStyle = '#FFAAAA';
-                context.lineWidth = 2 * scale;
-                context.stroke();
-
-                // Attack arrow at the end
-                const arrowSize = 12 * scale;
-                const arrowAngle = Math.atan2(attackDirection.y, attackDirection.x);
-
-                context.globalAlpha = 1;
-                context.fillStyle = '#FF6666';
-                context.beginPath();
-                context.moveTo(beamEndX, beamEndY);
-                context.lineTo(
-                    beamEndX - Math.cos(arrowAngle - 0.5) * arrowSize,
-                    beamEndY - Math.sin(arrowAngle - 0.5) * arrowSize
-                );
-                context.lineTo(
-                    beamEndX - Math.cos(arrowAngle + 0.5) * arrowSize,
-                    beamEndY - Math.sin(arrowAngle + 0.5) * arrowSize
-                );
-                context.closePath();
-                context.fill();
-            }
-
             context.restore();
 
             // Enemy name/identifier

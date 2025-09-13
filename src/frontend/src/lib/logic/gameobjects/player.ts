@@ -243,8 +243,8 @@ export const Player = (function () {
                 gradient.addColorStop(0, 'rgba(0, 178, 225, 0.3)');
                 gradient.addColorStop(1, 'rgba(0, 178, 225, 0)');
             } else {
-                gradient.addColorStop(0, 'rgba(255, 80, 80, 0.3)');
-                gradient.addColorStop(1, 'rgba(255, 80, 80, 0)');
+                gradient.addColorStop(0, 'rgba(80, 220, 120, 0.3)');
+                gradient.addColorStop(1, 'rgba(80, 220, 120, 0)');
             }
 
             context.fillStyle = gradient;
@@ -254,7 +254,7 @@ export const Player = (function () {
 
             context.beginPath();
             context.arc(centerX, centerY, radius, 0, Math.PI * 2);
-            context.fillStyle = this.isLocalPlayer ? '#00B2E1' : '#FF5050';
+            context.fillStyle = this.isLocalPlayer ? '#00B2E1' : '#50DC78';
             context.fill();
 
             const coreRadius = radius * 0.6;
@@ -280,12 +280,12 @@ export const Player = (function () {
             if (this.isLocalPlayer) {
                 context.fillStyle = 'rgba(255, 255, 255, 0.4)';
             } else {
-                context.fillStyle = 'rgba(255, 200, 200, 0.4)';
+                context.fillStyle = 'rgba(200, 255, 220, 0.4)';
             }
             context.fill();
 
             context.lineWidth = 3 * scale;
-            context.strokeStyle = this.isLocalPlayer ? '#0085A8' : '#CC3333';
+            context.strokeStyle = this.isLocalPlayer ? '#0085A8' : '#2E8B57';
             context.beginPath();
             context.arc(centerX, centerY, radius, 0, Math.PI * 2);
             context.stroke();
@@ -300,11 +300,11 @@ export const Player = (function () {
 
                 context.beginPath();
                 context.arc(accentX, accentY, accentSize, 0, Math.PI * 2);
-                context.fillStyle = this.isLocalPlayer ? 'rgba(0, 178, 225, 0.8)' : 'rgba(255, 80, 80, 0.8)';
+                context.fillStyle = this.isLocalPlayer ? 'rgba(0, 178, 225, 0.8)' : 'rgba(80, 220, 120, 0.8)';
                 context.fill();
 
                 context.lineWidth = 1 * scale;
-                context.strokeStyle = this.isLocalPlayer ? '#FFFFFF' : '#FFCCCC';
+                context.strokeStyle = this.isLocalPlayer ? '#FFFFFF' : '#CCFFCC';
                 context.stroke();
             }
 
@@ -319,8 +319,8 @@ export const Player = (function () {
                 const indicatorEndX = centerX + attackDirection.x * indicatorLength;
                 const indicatorEndY = centerY + attackDirection.y * indicatorLength;
 
-                const indicatorColor = this.isLocalPlayer ? '#40E0E0' : '#FF8080';
-                const indicatorGlowColor = this.isLocalPlayer ? '#80F0F0' : '#FFAAAA';
+                const indicatorColor = this.isLocalPlayer ? '#40E0E0' : '#40E080';
+                const indicatorGlowColor = this.isLocalPlayer ? '#80F0F0' : '#80F0C0';
 
                 context.lineWidth = 3 * scale;
                 context.strokeStyle = indicatorColor;
@@ -374,7 +374,7 @@ export const Player = (function () {
                 centerY + circleSize + 1 * scale
             );
 
-            context.fillStyle = this.isLocalPlayer ? '#00B2E1' : '#FF5050';
+            context.fillStyle = this.isLocalPlayer ? '#00B2E1' : '#50DC78';
             context.fillText(this.playerName,
                 centerX,
                 centerY + circleSize
@@ -385,4 +385,5 @@ export const Player = (function () {
         }
 
     }
+    
 })();
