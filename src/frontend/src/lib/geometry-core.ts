@@ -42,6 +42,10 @@ export const GeometryCore = (function () {
 
             this.world.spawn(this.localPlayer);
             this.world.camera.setSubject(this.localPlayer);
+
+            this.replicator.onPlayerUpdate(() => {
+                console.log("player changed")
+            })
         }
 
         initialize(): void {
