@@ -1,11 +1,12 @@
 using SpacetimeDB;
+using System;
 
 public static partial class Module
 {
-    [SpacetimeDB.Table]
-    public partial struct World
+    [Table(Name = "world", Public = true)]
+    public partial class World
     {
-        [SpacetimeDB.PrimaryKey] // Only 1 world row, so we can fix the ID to 1
+        [PrimaryKey] // Only 1 world row, fixed to ID = 1
         public int Id;
 
         // Size of the game world in pixels
@@ -21,12 +22,12 @@ public static partial class Module
         public float SpawnRate; // How often enemies spawn
     }
 
-    [SpacetimeDB.Reducer]
+    [Reducer]
     public static void CreateWorld(ReducerContext ctx, int width, int height)
     {
         // Prevent duplicate worlds
-        var existing = ctx.Db.World.Get(1);
-        if (existing != null)
+        var existing = ctx.Db.world.Id.Find(1);
+        if (existing is not null)
         {
             Log.Warn("World already exists!");
             return;
@@ -43,19 +44,19 @@ public static partial class Module
             SpawnRate = 1.0f
         };
 
-        ctx.Db.World.Insert(world);
+        ctx.Db.world.Insert(world);
         Log.Info($"World created with size {world.Width}x{world.Height}");
     }
 
-    [SpacetimeDB.Reducer]
+    [Reducer]
     public static void UpdateWorldTick(ReducerContext ctx)
     {
-        var worldOpt = ctx.Db.World.Get(1);
-        if (worldOpt == null) { Log.Warn("No world found."); return; }
-        var world = worldOpt.Value;
+        var world = ctx.Db.world.Id.Find(1);
+        if (world is null) { Log.Warn("No world found."); return; }
 
         world.Tick++;
-        ctx.Db.World.Update(world);
-    }
+        ctx.Db.world.Id.Update(world);
 
+        Log.Info($"World tick updated: {world.Tick}");
+    }
 }

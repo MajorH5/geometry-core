@@ -1,60 +1,64 @@
 using SpacetimeDB;
+using System;
 
 public static partial class Module
 {
-    [SpacetimeDB.Table]
-    public partial struct Enemy
+    [Table(Name = "enemy", Public = true)]
+    public partial class Enemy
     {
-        [SpacetimeDB.AutoInc]
-        [SpacetimeDB.PrimaryKey]
+        [AutoInc]
+        [PrimaryKey]
         public int Id;
 
-        public string Name;
+        public string Name = "";
         public int Health;
         public int Speed;
         public int Attack;
         public int AttackSpeed;
         public bool IsDead;
 
-
         // Position
         public float X;
         public float Y;
     }
 
-    [SpacetimeDB.Reducer]
+    [Reducer]
     public static void SpawnEnemy(ReducerContext ctx, string name, int health, int speed, int attack, int attackSpeed)
     {
-        var enemy = ctx.Db.Enemy.Insert(new Enemy
+        var enemy = ctx.Db.enemy.Insert(new Enemy
         {
             Name = name,
             Health = health,
             Speed = speed,
             Attack = attack,
             AttackSpeed = attackSpeed,
-            IsDead = false
+            IsDead = false,
+            X = 0,
+            Y = 0
         });
 
         Log.Info($"Spawned enemy {enemy.Name} (#{enemy.Id}) with {enemy.Health} HP");
     }
 
-    [SpacetimeDB.Reducer]
+    [Reducer]
     public static void MoveEnemy(ReducerContext ctx, int enemyId, float newX, float newY)
     {
-        var enemyOpt = ctx.Db.Enemy.Get(enemyId);
-        if (enemyOpt == null) { Log.Warn($"Enemy {enemyId} not found!"); return; }
-        var enemy = enemyOpt.Value;
+        var enemy = ctx.Db.enemy.Id.Find(enemyId);
+        if (enemy is null) { Log.Warn($"Enemy {enemyId} not found!"); return; }
+        if (enemy.IsDead) { Log.Warn($"{enemy.Name} is dead and cannot move."); return; }
 
         enemy.X = newX;
         enemy.Y = newY;
-        ctx.Db.Enemy.Update(enemy);
+
+        ctx.Db.enemy.Id.Update(enemy);
+        Log.Info($"{enemy.Name} moved to ({enemy.X}, {enemy.Y})");
     }
 
-    [SpacetimeDB.Reducer]
+    [Reducer]
     public static void UpdateEnemyHealth(ReducerContext ctx, int enemyId, int amount)
     {
-        var enemy = ctx.Db.Enemy.Get(enemyId);
-        if (enemy == null)
+        var enemy = ctx.Db.enemy.Id.Find(enemyId);
+        if (enemy is null)
         {
             Log.Warn($"Enemy with ID {enemyId} not found!");
             return;
@@ -75,6 +79,7 @@ public static partial class Module
             Log.Info($"{enemy.Name} (#{enemy.Id}) has died!");
         }
 
-        ctx.Db.Enemy.Update(enemy);
+        ctx.Db.enemy.Id.Update(enemy);
+        Log.Info($"{enemy.Name}'s Health updated to {enemy.Health}");
     }
 }
