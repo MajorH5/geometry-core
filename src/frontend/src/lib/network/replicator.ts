@@ -1,5 +1,4 @@
-import { DbConnection } from '../module_bindings';
-import { Player } from '../module_bindings';
+import { DbConnection, Enemy, Player } from '../module_bindings';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { Vector2 } from '../utils/vector2';
 
@@ -147,15 +146,9 @@ export class Replicator {
         }
     }
 
-    // Table queries - using the correct conn.db API
     public getPlayers(): Player[] {
         if (!this.conn) return [];
         return Array.from(this.conn.db.player.iter());
-    }
-
-    public getPlayer(playerId: number): Player | undefined {
-        if (!this.conn) return undefined;
-        return this.conn.db.player.findByPrimaryKey(playerId);
     }
 
     public getMyPlayer(): Player | undefined {
@@ -163,7 +156,6 @@ export class Replicator {
         return this.getPlayers().find((player) => player.identity === this.identity);
     }
 
-    // Event subscriptions - using the correct conn.db.table.onEvent API
     public onPlayerInsert(callback: (ctx: any, player: Player) => void): () => void {
         if (!this.conn) return () => {};
         
@@ -183,6 +175,27 @@ export class Replicator {
         
         this.conn.db.player.onDelete(callback);
         return () => this.conn?.db.player.removeOnDelete(callback);
+    }
+
+    public onEnemyInsert(callback: (ctx: any, enemy: Enemy) => void): () => void {
+        if (!this.conn) return () => {};
+        
+        this.conn.db.enemy.onInsert(callback);
+        return () => this.conn?.db.enemy.removeOnInsert(callback);
+    }
+
+    public onEnemyUpdate(callback: (ctx: any, oldEnemy: Enemy, newEnemy: Enemy) => void): () => void {
+        if (!this.conn) return () => {};
+        
+        this.conn.db.enemy.onUpdate(callback);
+        return () => this.conn?.db.enemy.removeOnUpdate(callback);
+    }
+
+    public onEnemyDelete(callback: (ctx: any, enemy: Enemy) => void): () => void {
+        if (!this.conn) return () => {};
+        
+        this.conn.db.enemy.onDelete(callback);
+        return () => this.conn?.db.enemy.removeOnDelete(callback);
     }
 
     // Utility methods

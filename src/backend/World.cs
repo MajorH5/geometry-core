@@ -22,6 +22,37 @@ public static partial class Module
         public float SpawnRate; // How often enemies spawn
     }
 
+    [Table(Name = "WorldTickUpdateTimer", Scheduled = nameof(UpdateWorldTick), ScheduledAt = nameof(ScheduledAt))]
+    public partial struct WorldTickUpdateTimer
+    {
+        [PrimaryKey, AutoInc]
+        public ulong Id;
+        public SpacetimeDB.ScheduleAt ScheduledAt; // Fixed: Use SpacetimeDB.ScheduleAt
+    }
+
+    [Reducer(ReducerKind.Init)]
+    public static void Init(ReducerContext ctx)
+    {
+        var world = new World
+        {
+            Id = 1,
+            Width = 500,
+            Height = 500,
+            IsActive = true,
+            Tick = 0,
+            CurrentWave = 1,
+            SpawnRate = 60
+        };
+        ctx.Db.World.Insert(world);
+
+        ctx.Db.WorldTickUpdateTimer.Insert(new WorldTickUpdateTimer
+        {
+            ScheduledAt = new SpacetimeDB.ScheduleAt.Interval(TimeSpan.FromMilliseconds(16.6666667)) // Use static Interval method
+        });
+
+        InitEnemyTypes(ctx);
+    }
+
     [Reducer]
     public static void CreateWorld(ReducerContext ctx, int width, int height)
     {
@@ -63,17 +94,22 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void UpdateWorldTick(ReducerContext ctx)
+    public static void UpdateWorldTick(ReducerContext ctx, WorldTickUpdateTimer timer)
     {
         var world = ctx.Db.World.Id.Find(1);
-        if (world is null) { Log.Warn("No world found."); return; }
 
         world.Tick++;
         ctx.Db.World.Id.Update(world);
 
+        if (world.Tick < 5)
+        {
+            SpawnEnemy(ctx, EnemyTypeIds.SPIKER, world.Width / 2, world.Height / 2);
+        }
+
+        /*
         Random rand = new Random();
 
-        if (world.Tick % (int)(1f / world.SpawnRate) == 0)
+        if (world.Tick % world.SpawnRate == 0)
         {
             for (int i = 0; i < world.CurrentWave; i++)
             {
@@ -188,7 +224,6 @@ public static partial class Module
                 }
             }
 
-
             // Remove projectile if out of bounds
             if (MathF.Abs(projectile.X) > world.Width / 2 || MathF.Abs(projectile.Y) > world.Height / 2)
             {
@@ -201,16 +236,14 @@ public static partial class Module
         }
 
         Log.Info($"World tick updated: {world.Tick}");
+        */
     }
-
-
 
     // ////////////////////////////////////////////////////////////////////////////////
     // /// 
     // ///                BLOCKS
     // /// 
     // //////////////////////////////////////////////////////////////////////////////////
-
 
     [Table(Name = "Block", Public = true)]
     public partial class Block
@@ -230,8 +263,7 @@ public static partial class Module
         public int height;
     }
 
-    [Reducer]
-    [Reducer]
+    [Reducer] // Fixed: Removed duplicate [Reducer] attribute
     public static void PlaceBlock(ReducerContext ctx, float x, float y, int health = 50, int width = 5, int height = 5)
     {
         // Check for overlaps
@@ -263,7 +295,6 @@ public static partial class Module
 
         Log.Info($"Block placed at ({x}, {y}) with {health} HP, size {width}x{height}");
     }
-
 
     [Reducer]
     public static void DamageBlock(ReducerContext ctx, int blockId, int damage)
@@ -367,4 +398,8 @@ public static partial class Module
         Log.Info($"Enemy (#{enemy.Id}) moved to ({enemy.X}, {enemy.Y})");
     }
 
+    // Note: You'll need to implement these methods that are referenced in UpdateWorldTick:
+    // - EnemySpreadShot(ctx, enemyId, bulletCount, speed)
+    // - EnemyShootAtClosestPlayer(ctx, enemyId, speed)
+    // And ensure the Enemy and Projectile tables are defined elsewhere in your module.
 }

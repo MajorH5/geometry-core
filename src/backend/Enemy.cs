@@ -4,6 +4,53 @@ using System.Collections.Generic;
 
 public static partial class Module
 {
+    public static class EnemyTypeIds
+    {
+        public const int SPIKER = 1;
+    }
+
+    [Table(Name = "EnemyType", Public = true)]
+    public partial class EnemyType
+    {
+        [PrimaryKey]
+        public int TypeId;
+        public string Name;
+        public int MaxHealth;
+        public int Speed;
+        public float Size;
+        public string Color;
+    }
+
+    public static long GenerateRandomLong()
+    {
+        Random rand = new Random();
+        return rand.NextInt64(1_000_000_000L, long.MaxValue);
+    }
+
+    [Reducer]
+    public static void InitEnemyTypes(ReducerContext ctx)
+    {
+        var existingTypes = ctx.Db.EnemyType.Iter().ToArray();
+        if (existingTypes.Length > 0)
+        {
+            Log.Info("Enemy types already initialized");
+            return;
+        }
+
+        // Basic enemies
+        ctx.Db.EnemyType.Insert(new EnemyType
+        {
+            TypeId = EnemyTypeIds.SPIKER,
+            Name = "Spiker",
+            MaxHealth = 25,
+            Speed = 3,
+            Size = 60,
+            Color = "#00ff00",
+        });
+
+        Log.Info("Enemy types initialized successfully");
+    }
+
     // ---------------- Enemy Table ----------------
     [Table(Name = "Enemy", Public = true)]
     public partial class Enemy
@@ -11,7 +58,8 @@ public static partial class Module
         [AutoInc]
         [PrimaryKey]
         public int Id;
-
+        public int TypeId;
+        public long ObjectId;
         public int Health;
         public int Speed;
         public int Attack;
@@ -27,19 +75,12 @@ public static partial class Module
     // ---------------- Reducers ----------------
 
     [Reducer]
-    public static void SpawnEnemy(ReducerContext ctx, int health, int speed, int attack, int attackspeed)
+    public static void SpawnEnemy(ReducerContext ctx, int typeId, int posX, int posY, int difficultyMultiplier = 1)
     {
-        // Make sure the world exists
         var world = ctx.Db.World.Id.Find(1);
-        if (world is null)
-        {
-            Log.Warn("World not found, cannot spawn enemy.");
-            return;
-        }
 
         Random rand = new Random();
 
-        // Choose a random edge: 0=left, 1=right, 2=top, 3=bottom
         int edge = rand.Next(0, 4);
         float x = 0;
         float y = 0;
@@ -64,18 +105,25 @@ public static partial class Module
                 break;
         }
 
+        var enemyType = ctx.Db.EnemyType.TypeId.Find(typeId);
+        int scaledHealth = (int)(enemyType.MaxHealth * difficultyMultiplier);
+        int scaledSpeed = Math.Max(1, (int)(enemyType.Speed * Math.Sqrt(difficultyMultiplier)));
+        // int scaledAttack = (int)(enemyType.BaseAttack * difficultyMultiplier);
+
         var enemy = ctx.Db.Enemy.Insert(new Enemy
         {
-            Health = health,
-            Speed = speed,
-            Attack = attack,
-            AttackSpeed = attackspeed,
+            TypeId = typeId,
+            ObjectId = GenerateRandomLong(),
+            Health = scaledHealth,
+            Speed = scaledSpeed,
+            Attack = 10,
+            AttackSpeed = 10,
             IsDead = false,
-            X = x, // spawn location (example)
+            X = x,
             Y = y
         });
 
-        Log.Info($"Spawned enemy (#{enemy.Id}) with {enemy.Health} HP");
+        Log.Info($"Spawned {enemyType.Name} enemy (#{enemy.Id}) with {enemy.Health} HP at ({x:F1}, {y:F1})");
     }
 
     [Reducer]

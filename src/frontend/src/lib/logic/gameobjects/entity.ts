@@ -1,6 +1,7 @@
 import { Vector2 } from "../../utils/vector2";
 import { GameObject } from "./gameobject.js";
 import { Projectile } from "./projectiles/projectile.ts";
+import { Enemy as NetworkEntity } from "../../../lib/module_bindings";
 
 type Vector2Type = InstanceType<typeof Vector2>;
 
@@ -9,6 +10,8 @@ export const Entity = (function () {
         maxHealth: number;
         health: number;
         healtbarOffset: number;
+        name: string;
+        attackAngle: number;
 
         constructor(maxHealth: number, bodyConfig: any) {
             super(bodyConfig);
@@ -16,10 +19,16 @@ export const Entity = (function () {
             this.maxHealth = maxHealth || 100;
             this.health = this.maxHealth;
             this.healtbarOffset = 10;
+            this.attackAngle = 0;
+            this.name = 'entity';
+        }
+
+        loadState (networkEntity: any) {
+            this.setPosition(new Vector2(networkEntity.x, networkEntity.y));
         }
 
         emitProjectiles(angle: number, projectileInfo: any): void {
-            if (!this.isSpawned || this.isDead()) {
+            if (!this.world || this.isDead()) {
                 return;
             }
 

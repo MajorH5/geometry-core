@@ -57,11 +57,16 @@ export const Player = (function () {
             this.renderPriority = 10;
         }
 
-        loadState (networkedPlayer: NetworkedPlayer) {
+        loadState (networkedPlayer: any) {
+            super.loadState(networkedPlayer);
+
             this.playerName = networkedPlayer.name.substring(0, 10);
-            this.setPosition(new Vector2(networkedPlayer.x, networkedPlayer.y));
             this.attackAngle = networkedPlayer.attackAngle * (Math.PI / 180);
             this.isFiring = networkedPlayer.isFiring;
+
+            if (!networkedPlayer.isOnline || networkedPlayer.isDead) {
+                this.despawn();
+            }
         }
 
         canFireProjectile(): boolean {

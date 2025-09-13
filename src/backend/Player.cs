@@ -9,6 +9,7 @@ public static partial class Module
         [SpacetimeDB.AutoInc]
         [SpacetimeDB.PrimaryKey]
         public int Id;
+        public long ObjectId;
         public string Name = "";
         public int Health;
         public int Speed;
@@ -105,6 +106,7 @@ public static partial class Module
             {
                 Name = "PlayerGuy",
                 Identity = ctx.Sender,
+                ObjectId = GenerateRandomLong(),
                 Health = 100,
                 Speed = 10,
                 IsFiring = false,

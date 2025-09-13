@@ -6,6 +6,9 @@ import { World } from "./logic/world";
 import { Vector2 } from "./utils/vector2";
 import { TheCore } from "./logic/gameobjects/the-core";
 import type { Player } from "./module_bindings";
+import { EnemyTypeIds } from "./logic/gameobjects/enemies/enemyTypeIds";
+import { Spiker } from "./logic/gameobjects/enemies/spiker";
+import type { Entity } from "./logic/gameobjects/entity";
 
 export const GeometryCore = (function () {
     return class GeometryCore {
@@ -63,7 +66,7 @@ export const GeometryCore = (function () {
             (this.context as any).textRenderingOptimization = 'optimizeSpeed';
 
             this.replicator.connect().then(() => {
-                this.replicator.onPlayerUpdate((ctx, oldNetworkedPlayer, newNetworkedPlayer) => {
+                this.replicator.onPlayerUpdate((ctx, _, newNetworkedPlayer) => {
                     if (this.world === null) return;
 
                     const isLocalPlayer = newNetworkedPlayer.identity.data === this.replicator.getIdentity()?.data;
@@ -96,9 +99,24 @@ export const GeometryCore = (function () {
                     this.world.spawn(player, networkedPlayer.id);
                 });
 
-                this.replicator.onPlayerDelete((ctx, player) => {
-                    
-                })
+                this.replicator.onEnemyInsert((_, networkedEnemy) => {
+                    if (!this.world) return;
+                    let enemy: InstanceType<typeof Entity> | null = null;
+
+                    switch (networkedEnemy.typeId) {
+                        case EnemyTypeIds.SPIKER:
+                            enemy = new Spiker();
+                            break;
+                    }
+
+                    if (enemy !== null) {
+                        enemy.loadState(networkedEnemy);
+                        this.world.spawn(enemy, enemy.objectId);
+                        console.log('enemy')
+                    } else {
+                        console.log("unknown enemy: ", networkedEnemy);
+                    }
+                });
             });
         }
 
