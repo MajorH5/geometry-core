@@ -57,11 +57,13 @@ public static partial class Module
         world.Tick++;
         ctx.Db.World.Id.Update(world);
 
+        Random rand = new Random();
+
         if (world.Tick % (int)(1f / world.SpawnRate) == 0)
         {
             for (int i = 0; i < world.CurrentWave; i++)
             {
-                SpawnEnemy(ctx, 100 + world.Tick , 5 + world.Tick, 5 + world.Tick, 1);
+                SpawnEnemy(ctx, 100 + world.Tick, 5 + world.Tick, 5 + world.Tick, 1);
             }
         }
 
@@ -87,7 +89,7 @@ public static partial class Module
 
                 if (spreadShot)
                 {
-                    EnemySpreadShot(ctx, enemy.Id, 0.5f + 0.01f * world.Tick); // speed scales with tick
+                    EnemySpreadShot(ctx, enemy.Id, 6, 0.5f + 0.01f * world.Tick); // speed scales with tick
                 }
                 else
                 {
