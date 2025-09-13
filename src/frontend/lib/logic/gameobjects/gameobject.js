@@ -3,20 +3,46 @@ import { Constants } from "../../utils/constants.js";
 
 export const GameObject = (function () {
     return class GameObject {
-        constructor (bodyConfig) {
+        constructor(bodyConfig) {
             this.body = new Body(bodyConfig);
 
             this.isSpawned = false;
             this.world = null;
             this.elapsedTime = 0;
             this.objectId = -1;
+            this.renderPriority = 0;
         }
 
-        getElapsedTime () {
+        getScreenPosition(offset, scale, center = false) {
+            let position = center ? this.getCenter() : this.body.position;
+
+            position = position.scale(scale);
+            offset = offset.scale(scale);
+
+            return position.add(offset);
+        }
+
+        isOnScreen(offset, scale) {
+            if (!this.isSpawned) {
+                return false;
+            }
+
+            const canvasSize = Constants.CANVAS_SIZE;
+
+            const screenSize = this.body.size.scale(scale);
+            const screenPosition = this.getScreenPosition(offset, scale);
+
+            const visible = (screenPosition.x + screenSize.x > 0 && screenPosition.x < canvasSize.x) &&
+                (screenPosition.y + screenSize.y > 0 && screenPosition.y < canvasSize.y);
+
+            return visible;
+        }
+
+        getElapsedTime() {
             return this.elapsedTime;
         }
-        
-        setPosition (position, centerOn = false) {
+
+        setPosition(position, centerOn = false) {
             if (centerOn) {
                 position = position.subtract(this.body.size.div(2));
             }
@@ -24,22 +50,30 @@ export const GameObject = (function () {
             this.body.position = position;
         }
 
-        getPosition () {
+        getPosition() {
             return this.position;
         }
 
-        onSpawn (world, objectId) {
+        getCenter() {
+            return this.body.position.add(this.body.size.div(2));
+        }
+
+        getSize() {
+            return this.body.size;
+        }
+
+        onSpawn(world, objectId) {
             this.isSpawned = true;
             this.world = world;
             this.objectId = objectId;
         }
 
-        onDespawn () {
+        onDespawn() {
             this.isSpawned = false;
             this.world = null;
         }
 
-        despawn () {
+        despawn() {
             if (!this.isSpawned || this.world === null) {
                 return;
             }
@@ -47,13 +81,13 @@ export const GameObject = (function () {
             this.world.despawn(this);
         }
 
-        update (deltaTime) {
+        update(deltaTime) {
             this.elapsedTime += deltaTime;
         }
 
-        render (context) {
+        render(context, offset, scale) {
             if (Constants.DEBUG_MODE) {
-                this.body.render(context);
+                this.body.render(context, offset, scale);
             }
         }
     };

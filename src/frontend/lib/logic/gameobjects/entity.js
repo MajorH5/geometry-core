@@ -10,7 +10,7 @@ export const Entity = (function () {
             this.healtbarOffset = 10;
         }
 
-        emitProjectile (angle, projectileInfo) {
+        emitProjectile(angle, projectileInfo) {
             if (!this.isSpawned || this.isDead()) {
                 return;
             }
@@ -34,21 +34,21 @@ export const Entity = (function () {
             this.health = Math.min(this.maxHealth, this.health + amount);
         }
 
-        isDead () {
+        isDead() {
             return this.health <= 0;
         }
 
-        isAlive () {
+        isAlive() {
             return this.health > 0;
         }
 
-        render(context) {
-            super.render(context);
+        render(context, offset, scale) {
+            super.render(context, offset, scale);
 
-            const barWidth = this.body.size.x;
-            const barHeight = 6;
-            const x = this.body.position.x + this.body.size.x / 2 - barWidth / 2;
-            const y = this.body.position.y - this.body.size.y / 2 - barHeight + this.healtbarOffset;
+            const barWidth = this.body.size.x * scale;
+            const barHeight = 6 * scale;
+            const x = (this.body.position.x + this.body.size.x / 2 + offset.x) * scale - barWidth / 2;
+            const y = (this.body.position.y - this.body.size.y / 2 + offset.y) * scale - barHeight + this.healtbarOffset * scale;
 
             context.fillStyle = 'black';
             context.fillRect(x, y, barWidth, barHeight);
@@ -58,7 +58,7 @@ export const Entity = (function () {
             context.fillRect(x, y, healthWidth, barHeight);
 
             context.strokeStyle = 'black';
-            context.lineWidth = 1;
+            context.lineWidth = 1 * scale;
             context.strokeRect(x, y, barWidth, barHeight);
         }
 

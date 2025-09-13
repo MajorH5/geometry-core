@@ -3,7 +3,7 @@ import { Event } from "../utils/event.js";
 
 export const Body = (function () {
     return class Body {
-        constructor (config) {
+        constructor(config) {
             this.position = config.position || new Vector2(0, 0);
             this.size = config.size || new Vector2(0, 0);
             this.velocity = config.velocity || new Vector2(0, 0);
@@ -12,12 +12,17 @@ export const Body = (function () {
             this.collision = new Event();
         }
 
-        render (context) {
+        render(context, offset, scale) {
             context.strokeStyle = '#ff0000';
-            context.lineWidth = 1;
+            context.lineWidth = 1 * scale;
 
             context.beginPath();
-            context.rect(this.position.x, this.position.y, this.size.x, this.size.y);
+            context.rect(
+                (this.position.x + offset.x) * scale,
+                (this.position.y + offset.y) * scale,
+                this.size.x * scale,
+                this.size.y * scale
+            );
             context.stroke();
             context.closePath();
         }

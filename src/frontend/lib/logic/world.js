@@ -1,5 +1,8 @@
 import { ParticleManager } from "../vfx/particles/particleManager.js";
 import { Physics } from "../physics/physics.js";
+import { Grid } from "../vfx/grid.js";
+import { Camera } from "./camera.js";
+import { Constants } from "../utils/constants.js";
 
 export const World = (function () {
     return class World {
@@ -8,7 +11,13 @@ export const World = (function () {
             this.gameObjects = [];
             this.physics = new Physics(worldSize);
             this.particleManager = new ParticleManager();
+            this.camera = new Camera();
             this.replicator = replicator;
+
+            this.visualEffects = [
+                // new Grid(worldSize.x, worldSize.y),
+                new Grid(Constants.CANVAS_SIZE.x, Constants.CANVAS_SIZE.y),
+            ];
         }
 
         spawn(gameObject, objectId = -1) {
@@ -18,6 +27,7 @@ export const World = (function () {
 
             this.gameObjects.push(gameObject);
             this.physics.add(gameObject.body);
+            this.gameObjects.sort((a, z) => a.renderPriority - z.renderPriority);
 
             gameObject.onSpawn(this, objectId);
         }
@@ -43,70 +53,30 @@ export const World = (function () {
                 gameObject.update(deltaTime);
             }
 
+            this.camera.update(deltaTime);
             this.particleManager.update(deltaTime);
         }
 
         render(context) {
-            this.drawGrid(context, this.worldSize.x, this.worldSize.y);
+            const cameraOffset = this.camera.getOffset();
+            const cameraScale = this.camera.getScale();
+
+            for (let i = 0; i < this.visualEffects.length; i++) {
+                const vfx = this.visualEffects[i];
+                vfx.render(context, cameraOffset, cameraScale);
+            }
+
             for (let i = 0; i < this.gameObjects.length; i++) {
                 const gameObject = this.gameObjects[i];
-                gameObject.render(context);
-            }
-            this.particleManager.render(context);
-        }
 
-        drawGrid(context, width, height, spacing = 20, majorEvery = 5) {
-            context.save();
+                if (!gameObject.isOnScreen(cameraOffset, cameraScale)) {
+                    continue;
+                }
 
-            context.clearRect(0, 0, width, height);
-
-            const originX = width / 2;
-            const originY = height / 2;
-
-            context.lineWidth = 1;
-
-            context.strokeStyle = '#ddd';
-            for (let x = originX % spacing; x < width; x += spacing) {
-                context.beginPath();
-                context.moveTo(x, 0);
-                context.lineTo(x, height);
-                context.stroke();
-            }
-            for (let y = originY % spacing; y < height; y += spacing) {
-                context.beginPath();
-                context.moveTo(0, y);
-                context.lineTo(width, y);
-                context.stroke();
+                gameObject.render(context, cameraOffset, cameraScale);
             }
 
-            context.strokeStyle = '#bbb';
-            context.lineWidth = 1.5;
-            for (let x = originX % (spacing * majorEvery); x < width; x += spacing * majorEvery) {
-                context.beginPath();
-                context.moveTo(x, 0);
-                context.lineTo(x, height);
-                context.stroke();
-            }
-            for (let y = originY % (spacing * majorEvery); y < height; y += spacing * majorEvery) {
-                context.beginPath();
-                context.moveTo(0, y);
-                context.lineTo(width, y);
-                context.stroke();
-            }
-
-            context.strokeStyle = '#000';
-            context.lineWidth = 2;
-
-            context.beginPath();
-            context.moveTo(0, originY);
-            context.lineTo(width, originY);
-            context.stroke();
-            context.beginPath();
-            context.moveTo(originX, 0);
-            context.lineTo(originX, height);
-            context.stroke();
-
-            context.restore();
+            this.particleManager.render(context, cameraOffset, cameraScale);
         }
     }
 })();

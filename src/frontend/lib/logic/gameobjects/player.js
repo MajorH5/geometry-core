@@ -115,6 +115,23 @@ export const Player = (function () {
             });
         }
 
+        getMouseDirection() {
+            if (!this.isSpawned) {
+                return new Vector2(0, 0);
+            }
+
+            const camera = this.world.camera;
+            const cameraOffset = camera.getOffset(), cameraScale = camera.getScale();
+
+            const screenPositionCenter = this.getScreenPosition(cameraOffset, cameraScale, true);
+            const targetPoint = this.mousePosition;
+
+            const angle = Math.atan2(targetPoint.y - screenPositionCenter.y,
+                targetPoint.x - screenPositionCenter.x);
+
+            return new Vector2(Math.cos(angle), Math.sin(angle)).normalize();
+        }
+
         updateMovementControls() {
             const movementVector = new Vector2(0, 0);
 
@@ -140,11 +157,11 @@ export const Player = (function () {
             this.updateMovementControls();
         }
 
-        render(context) {
-            super.render(context);
-            const circleSize = Math.max(this.body.size.x, this.body.size.y);
-            const centerX = this.body.position.x + circleSize / 2;
-            const centerY = this.body.position.y + circleSize / 2;
+        render(context, offset, scale) {
+            super.render(context, offset, scale);
+            const circleSize = Math.max(this.body.size.x, this.body.size.y) * scale;
+            const centerX = (this.body.position.x + this.body.size.x / 2 + offset.x) * scale;
+            const centerY = (this.body.position.y + this.body.size.y / 2 + offset.y) * scale;
             const radius = circleSize / 2;
             const time = Date.now() * 0.001;
 
@@ -177,7 +194,7 @@ export const Player = (function () {
             context.beginPath();
             for (let i = 0; i < spikes; i++) {
                 const angle = (i / spikes) * Math.PI * 2 + time * 0.5;
-                const outerRadius = coreRadius + Math.sin(time * 2 + i) * 3;
+                const outerRadius = coreRadius + Math.sin(time * 2 + i) * 3 * scale;
                 const innerRadius = coreRadius * 0.4;
 
                 const x1 = centerX + Math.cos(angle) * outerRadius;
@@ -198,7 +215,7 @@ export const Player = (function () {
             }
             context.fill();
 
-            context.lineWidth = 3;
+            context.lineWidth = 3 * scale;
             context.strokeStyle = this.isLocalPlayer ? '#0085A8' : '#CC3333';
             context.beginPath();
             context.arc(centerX, centerY, radius, 0, Math.PI * 2);
@@ -217,7 +234,7 @@ export const Player = (function () {
                 context.fillStyle = this.isLocalPlayer ? 'rgba(0, 178, 225, 0.8)' : 'rgba(255, 80, 80, 0.8)';
                 context.fill();
 
-                context.lineWidth = 1;
+                context.lineWidth = 1 * scale;
                 context.strokeStyle = this.isLocalPlayer ? '#FFFFFF' : '#FFCCCC';
                 context.stroke();
             }
@@ -226,12 +243,12 @@ export const Player = (function () {
 
             context.save();
             context.textAlign = 'center';
-            context.font = 'Bold 16px "Courier New", monospace';
+            context.font = `Bold ${16 * scale}px "Courier New", monospace`;
 
             context.fillStyle = 'rgba(0, 0, 0, 0.7)';
             context.fillText('You',
-                centerX + 1,
-                centerY + circleSize + 1
+                centerX + 1 * scale,
+                centerY + circleSize + 1 * scale
             );
 
             context.fillStyle = this.isLocalPlayer ? '#00B2E1' : '#FF5050';

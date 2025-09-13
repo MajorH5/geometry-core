@@ -8,40 +8,52 @@ import { TheCore } from "./logic/gameobjects/the-core.js";
 
 export const GeometryCore = (function () {
     return class GeometryCore {
-        constructor (canvas) {
+        constructor(canvas) {
             this.canvas = canvas;
             this.context = canvas.getContext("2d");
 
             this.localPlayer = new Player(true, canvas);
             this.replicator = new Replicator(Constants.SERVER_WS_URL);
-            
+
             this.initialized = false;
             this.isRunning = false;
             this.lastFrameTime = null;
-            
+
             this.world = null;
-            
+
             this.world = new World(new Vector2(500, 500), this.replicator);
-            
+
             const core = new TheCore();
             this.world.spawn(core);
             core.setPosition(this.world.worldSize.div(2), true);
-            
+
             this.world.spawn(this.localPlayer);
+            this.world.camera.setSubject(this.localPlayer);
         }
 
 
-        initialize () {
+        initialize() {
             if (this.initialized) {
                 return;
             }
 
             this.initialized = true;
-            this.canvas.width = Constants.CANVAS_SIZE.x;
-            this.canvas.height = Constants.CANVAS_SIZE.y;
+
+            const dpr = window.devicePixelRatio || 1;
+
+            this.canvas.width = Constants.CANVAS_SIZE.x * dpr;
+            this.canvas.height = Constants.CANVAS_SIZE.y * dpr;
+
+            this.canvas.style.width = Constants.CANVAS_SIZE.x + 'px';
+            this.canvas.style.height = Constants.CANVAS_SIZE.y + 'px';
+
+            this.context.scale(dpr, dpr);
+
+            this.context.imageSmoothingEnabled = false;
+            this.context.textRenderingOptimization = 'optimizeSpeed';
         }
 
-        start () {
+        start() {
             if (this.isRunning) {
                 return;
             }
@@ -50,7 +62,7 @@ export const GeometryCore = (function () {
             this.loop(1 / 60);
         }
 
-        loop () {
+        loop() {
             if (!this.isRunning) {
                 return;
             }
@@ -60,31 +72,33 @@ export const GeometryCore = (function () {
 
             this.update(deltaTime);
             this.render();
-            
+
             this.lastFrameTime = now;
             requestAnimationFrame(() => this.loop());
         }
 
-        stop () {
+        stop() {
             if (!this.isRunning) {
                 return;
             }
-            
+
             this.isRunning = false;
         }
 
-        update (deltaTime) {
+        update(deltaTime) {
             if (this.world !== null) {
                 this.world.update(deltaTime);
             }
         }
 
-        render () {
+        render() {
             this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.context.translate(-0.5, -0.5);
             
             if (this.world !== null) {
                 this.world.render(this.context);
             }
+            this.context.translate(0.5, 0.5);
         }
     };
 })();

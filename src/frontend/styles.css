@@ -7,6 +7,10 @@ canvas {
     left: 0;
     bottom: 0;
     right: 0;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
 }
 
 * {

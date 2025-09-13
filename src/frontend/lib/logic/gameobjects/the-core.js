@@ -12,18 +12,18 @@ export const TheCore = (function () {
             this.healtbarOffset = -10;
         }
 
-        render(context) {
-            super.render(context);
+        render(context, offset, scale) {
+            super.render(context, offset, scale);
 
-            const centerX = this.body.position.x + this.body.size.x / 2;
-            const centerY = this.body.position.y + this.body.size.y / 2;
-            const baseRadius = Math.max(this.body.size.x, this.body.size.y) / 2;
+            const centerX = (this.body.position.x + this.body.size.x / 2 + offset.x) * scale;
+            const centerY = (this.body.position.y + this.body.size.y / 2 + offset.y) * scale;
+            const baseRadius = (Math.max(this.body.size.x, this.body.size.y) / 2) * scale;
 
-            const pulse = Math.sin(this.getElapsedTime() * 0.002) * 10;
+            const pulse = Math.sin(this.getElapsedTime() * 0.002) * 10 * scale;
             const radius = baseRadius + pulse;
 
             for (let i = 0; i < 7; i++) {
-                const layerPulse = Math.sin(this.getElapsedTime() * 0.004 + i) * 5 + (i * 2);
+                const layerPulse = (Math.sin(this.getElapsedTime() * 0.004 + i) * 5 + (i * 2)) * scale;
                 const layerRadius = radius + layerPulse;
 
                 context.beginPath();
@@ -65,7 +65,7 @@ export const TheCore = (function () {
 
                 for (let formation = 0; formation < 3; formation++) {
                     const formationRotation = layerTime * (0.3 + formation * 0.2) + formation * Math.PI * 0.66;
-                    const formationRadius = baseRadius * (0.6 + formation * 0.3) * layerScale; // Increased size
+                    const formationRadius = baseRadius * (0.6 + formation * 0.3) * layerScale;
 
                     const sizePulse = Math.sin(layerTime * 2 + formation * 2) * 0.3 + 1;
                     const currentRadius = formationRadius * sizePulse;
@@ -101,7 +101,7 @@ export const TheCore = (function () {
                         context.fill();
 
                         context.strokeStyle = `hsla(200, ${saturation + 20}%, ${lightness + 20}%, ${layerAlpha * 0.8})`;
-                        context.lineWidth = 1.5;
+                        context.lineWidth = 1.5 * scale;
                         context.stroke();
 
                         context.restore();
@@ -111,7 +111,7 @@ export const TheCore = (function () {
                 if (layer < 2) {
                     const connectionAlpha = layerAlpha * 0.3;
                     context.strokeStyle = `rgba(150, 220, 255, ${connectionAlpha})`;
-                    context.lineWidth = 0.8;
+                    context.lineWidth = 0.8 * scale;
 
                     for (let c = 0; c < 12; c++) {
                         const angle1 = (c / 12) * Math.PI * 2 + layerTime;
@@ -133,7 +133,7 @@ export const TheCore = (function () {
             }
 
             context.strokeStyle = 'white';
-            context.lineWidth = 2;
+            context.lineWidth = 2 * scale;
             context.beginPath();
 
             const outerWavePoints = 64;
