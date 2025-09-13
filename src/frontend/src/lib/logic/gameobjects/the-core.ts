@@ -1,8 +1,13 @@
-import { Vector2 } from "../../utils/vector2.js";
-import { Entity } from "./entity.js";
+import { Vector2 } from "../../utils/vector2";
+import { Entity } from "./entity.ts";
+
+type Vector2Type = InstanceType<typeof Vector2>;
 
 export const TheCore = (function () {
     return class TheCore extends Entity {
+        time: number;
+        healtbarOffset: number;
+
         constructor() {
             super(100, {
                 size: new Vector2(50, 50)
@@ -12,7 +17,7 @@ export const TheCore = (function () {
             this.healtbarOffset = -10;
         }
 
-        render(context, offset, scale) {
+        render(context: any, offset: Vector2Type, scale: number): void {
             super.render(context, offset, scale);
 
             const centerX = (this.body.position.x + this.body.size.x / 2 + offset.x) * scale;

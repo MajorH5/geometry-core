@@ -1,12 +1,13 @@
-
 export const Event = (function () {
     return class Event {
+        private handlers: ((...data: any[]) => void)[];
+
         constructor () {
             this.handlers = [];
         }
 
-        listenOnce (handler) {
-            const onceHandler = (...data) => {
+        listenOnce (handler: (...data: any[]) => void): { unlisten: () => void } {
+            const onceHandler = (...data: any[]) => {
                 this.unlisten(onceHandler);
                 handler(...data);
             };
@@ -20,7 +21,7 @@ export const Event = (function () {
             }
         }
 
-        unlisten (handler) {
+        unlisten (handler: (...data: any[]) => void): void {
             const index = this.handlers.indexOf(handler);
 
             if (index !== -1) {
@@ -28,9 +29,13 @@ export const Event = (function () {
             }
         }
 
-        listen (handler) {
+        listen (handler: (...data: any[]) => void): { unlisten: () => void } {
             if (this.handlers.includes(handler)){
-                return;
+                return {
+                    unlisten: () => {
+                        this.unlisten(handler);
+                    }
+                };
             }
 
             this.handlers.push(handler);
@@ -42,7 +47,7 @@ export const Event = (function () {
             }
         }
 
-        trigger (...data) {
+        trigger (...data: any[]): void {
             for (let i = this.handlers.length - 1; i >= 0; i--){
                 const handler = this.handlers[i];
 

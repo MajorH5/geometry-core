@@ -1,15 +1,24 @@
+import { Vector2 } from "../utils/vector2.ts";
+import { Body } from "./body.ts";
+
+type Vector2Instance = InstanceType<typeof Vector2>;
+type BodyInstance = InstanceType<typeof Body>;
+
 export const Physics = (function () {
     return class Physics {
-        constructor(worldSize) {
+        private worldSize: Vector2Instance;
+        private bodies: BodyInstance[];
+
+        constructor(worldSize: Vector2Instance) {
             this.worldSize = worldSize;
             this.bodies = [];
         }
 
-        add(body) {
+        add(body: BodyInstance): void {
             this.bodies.push(body);
         }
 
-        remove(body) {
+        remove(body: BodyInstance): void {
             const index = this.bodies.indexOf(body);
 
             if (index === -1) {
@@ -19,7 +28,7 @@ export const Physics = (function () {
             this.bodies.splice(index, 1);
         }
         
-        checkCollision(body1, body2) {
+        checkCollision(body1: BodyInstance, body2: BodyInstance): boolean {
             return (
                 body1.position.x < body2.position.x + body2.size.x &&
                 body1.position.x + body1.size.x > body2.position.x &&
@@ -28,7 +37,7 @@ export const Physics = (function () {
             );
         }
 
-        update(deltaTime) {
+        update(deltaTime: number): void {
             for (let i = 0; i < this.bodies.length; i++) {
                 const body = this.bodies[i];
 
@@ -71,4 +80,4 @@ export const Physics = (function () {
             }
         }
     }
-})();
+})()

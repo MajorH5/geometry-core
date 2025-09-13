@@ -1,6 +1,9 @@
 export const Replicator = (function () {
     return class Replicator {
-        constructor (url) {
+        private url: string;
+        private socket: WebSocket;
+
+        constructor (url: string) {
             this.url = url;
             this.socket = new WebSocket(url, "v1.json.spacetimedb");
 
@@ -8,19 +11,19 @@ export const Replicator = (function () {
             this.socket.onclose = () => this._onSocketClose();
             this.socket.onmessage = (...args) => this._onSocketMessage(...args);
 
-            globalThis.socket = this.socket;
+            (globalThis as any).socket = this.socket;
         }
 
-        _onSocketOpen () {
+        private _onSocketOpen (): void {
             console.log(`[Replicator._onSocketOpen]: WebSocket has opened to remote server: ${this.url}`);
         }
         
-        _onSocketClose () {
+        private _onSocketClose (): void {
             console.log(`[Replicator._onSocketOpen]: The WebSocket to ${this.url} has closed.`);
             
         }
         
-        _onSocketMessage (event) {
+        private _onSocketMessage (event: MessageEvent): void {
             const data = JSON.parse(event.data);
             console.log(`[Replicator._onSocketOpen]: Incoming socket data from server.`, data);
         }

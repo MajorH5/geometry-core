@@ -1,8 +1,14 @@
 import { Vfx } from "./vfx.js";
+import { Vector2 } from "../utils/vector2.ts";
 
 export const Grid = (function () {
     return class Grid extends Vfx {
-        constructor(width, height, spacing = 20, majorEvery = 5) {
+        private width: number;
+        private height: number;
+        private spacing: number;
+        private majorEvery: number;
+
+        constructor(width: number, height: number, spacing: number = 20, majorEvery: number = 5) {
             super();
 
             this.width = width;
@@ -11,7 +17,7 @@ export const Grid = (function () {
             this.majorEvery = majorEvery;
         }
 
-        render(context, offset, scale) {
+        render(context: CanvasRenderingContext2D, offset: Vector2, scale: number): void {
             const width = this.width;
             const height = this.height;
 

@@ -1,8 +1,14 @@
-import { GameObject } from "../gameobject.js";
+import { GameObject } from "../gameobject";
+import { Vector2 } from "../../../utils/vector2";
+
+type Vector2Type = InstanceType<typeof Vector2>;
 
 export const Projectile = (function () {
     return class Projectile extends GameObject {
-        constructor(source, origin, velocity, projectileInfo) {
+        lifetime: number;
+        source: any;
+
+        constructor(source: any, origin: Vector2Type, velocity: Vector2Type, projectileInfo: any) {
             super({
                 position: origin,
                 velocity: velocity,
@@ -17,7 +23,7 @@ export const Projectile = (function () {
                 this.despawn();
             });
 
-            this.body.collision.listen((other) => {
+            this.body.collision.listen((other: any) => {
                 const gameObject = other.getTag('gameobject');
 
                 if (other.solid || (gameObject && !(gameObject instanceof Projectile) && gameObject !== this.source)) {
@@ -27,7 +33,7 @@ export const Projectile = (function () {
             });
         }
 
-        update(deltaTime) {
+        update(deltaTime: number): void {
             super.update(deltaTime);
 
             if (this.getElapsedTimeSec() > this.lifetime) {
@@ -35,7 +41,7 @@ export const Projectile = (function () {
             }
         }
 
-        render(context, offset, scale) {
+        render(context: any, offset: Vector2Type, scale: number): void {
             super.render(context, offset, scale);
 
             const centerX = (this.body.position.x + this.body.size.x / 2 + offset.x) * scale;
@@ -178,6 +184,6 @@ export const Projectile = (function () {
             }
 
             context.restore();
-        }s
+        }
     };
 })();

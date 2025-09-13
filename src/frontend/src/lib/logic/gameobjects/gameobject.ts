@@ -1,10 +1,20 @@
-import { Body } from "../../physics/body.js";
-import { Constants } from "../../utils/constants.js";
+import { Body as PhysicsBody } from "../../physics/body";
+import { Constants } from "../../utils/constants";
+import { Vector2 } from "../../utils/vector2";
+
+type Vector2Type = InstanceType<typeof Vector2>;
 
 export const GameObject = (function () {
     return class GameObject {
-        constructor(bodyConfig) {
-            this.body = new Body(bodyConfig);
+        body: InstanceType<typeof PhysicsBody>;
+        isSpawned: boolean;
+        world: any;
+        elapsedTime: number;
+        objectId: number;
+        renderPriority: number;
+
+        constructor(bodyConfig: any) {
+            this.body = new PhysicsBody(bodyConfig);
             this.body.setTag('gameobject', this);
 
             this.isSpawned = false;
@@ -14,7 +24,7 @@ export const GameObject = (function () {
             this.renderPriority = 0;
         }
 
-        getScreenPosition(offset, scale, center = false) {
+        getScreenPosition(offset: Vector2Type, scale: number, center: boolean = false): Vector2Type {
             let position = center ? this.getCenter() : this.body.position;
 
             position = position.scale(scale);
@@ -23,7 +33,7 @@ export const GameObject = (function () {
             return position.add(offset);
         }
 
-        isOnScreen(offset, scale) {
+        isOnScreen(offset: Vector2Type, scale: number): boolean {
             if (!this.isSpawned) {
                 return false;
             }
@@ -39,15 +49,15 @@ export const GameObject = (function () {
             return visible;
         }
 
-        getElapsedTimeMs() {
+        getElapsedTimeMs(): number {
             return this.elapsedTime;
         }
 
-        getElapsedTimeSec () {
+        getElapsedTimeSec(): number {
             return this.elapsedTime / 1000;
         }
 
-        setPosition(position, centerOn = false) {
+        setPosition(position: Vector2Type, centerOn: boolean = false): void {
             if (centerOn) {
                 position = position.subtract(this.body.size.div(2));
             }
@@ -55,30 +65,30 @@ export const GameObject = (function () {
             this.body.position = position;
         }
 
-        getPosition() {
-            return this.position;
+        getPosition(): Vector2Type {
+            return this.body.position;
         }
 
-        getCenter() {
+        getCenter(): Vector2Type {
             return this.body.position.add(this.body.size.div(2));
         }
 
-        getSize() {
+        getSize(): Vector2Type {
             return this.body.size;
         }
 
-        onSpawn(world, objectId) {
+        onSpawn(world: any, objectId: number): void {
             this.isSpawned = true;
             this.world = world;
             this.objectId = objectId;
         }
 
-        onDespawn() {
+        onDespawn(): void {
             this.isSpawned = false;
             this.world = null;
         }
 
-        despawn() {
+        despawn(): void {
             if (!this.isSpawned || this.world === null) {
                 return;
             }
@@ -86,11 +96,11 @@ export const GameObject = (function () {
             this.isSpawned = false;
         }
 
-        update(deltaTime) {
+        update(deltaTime: number): void {
             this.elapsedTime += deltaTime;
         }
 
-        render(context, offset, scale) {
+        render(context: any, offset: Vector2Type, scale: number): void {
             if (Constants.DEBUG_MODE) {
                 this.body.render(context, offset, scale);
             }

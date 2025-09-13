@@ -1,6 +1,8 @@
-import { ProjectileInfo } from "./projectiles/projectileInfo.js";
-import { Vector2 } from "../../utils/vector2.js";
-import { Entity } from "./entity.js";
+import { ProjectileInfo } from "./projectiles/projectileInfo.ts";
+import { Vector2 } from "../../utils/vector2";
+import { Entity } from "./entity.ts";
+
+type Vector2Type = InstanceType<typeof Vector2>;
 
 const INPUT_LEFT = 'left';
 const INPUT_RIGHT = 'right';
@@ -12,7 +14,17 @@ const PLAYER_VELOCITY_SMOOTHNESS = 0.175;
 
 export const Player = (function () {
     return class Player extends Entity {
-        constructor(isLocalPlayer = false, canvas) {
+        canvas: any;
+        isLocalPlayer: boolean;
+        controlsLocked: boolean;
+        mousePosition: Vector2Type;
+        attackAngle: number;
+        keys: { [key: string]: boolean };
+        lastAttack: number;
+        rateOfFire: number;
+        currentWeapon: any;
+
+        constructor(isLocalPlayer: boolean = false, canvas: any) {
             super(100, {
                 size: new Vector2(50, 50)
             })
@@ -40,11 +52,11 @@ export const Player = (function () {
             this.renderPriority = 10;
         }
 
-        canFireProjectile () {
+        canFireProjectile(): boolean {
             return ((Date.now() - this.lastAttack) / 1000) >= this.rateOfFire;
         }
 
-        bindControls() {
+        bindControls(): void {
             document.addEventListener('keydown', (event) => {
                 if (this.controlsLocked || !this.isSpawned || this.world.isPaused) {
                     return;
@@ -95,7 +107,7 @@ export const Player = (function () {
                 }
             });
 
-            this.canvas.addEventListener('mousemove', (event) => {
+            this.canvas.addEventListener('mousemove', (event: MouseEvent) => {
                 var rect = this.canvas.getBoundingClientRect();
 
                 var scaleX = this.canvas.width / rect.width;
@@ -107,7 +119,7 @@ export const Player = (function () {
                 this.mousePosition = new Vector2(mouseX, mouseY);
             });
 
-            this.canvas.addEventListener('mousedown', (event) => {
+            this.canvas.addEventListener('mousedown', (event: MouseEvent) => {
                 const wasLeftMouse = event.button === 0;
 
                 if (this.controlsLocked || !this.isSpawned || !wasLeftMouse) {
@@ -117,7 +129,7 @@ export const Player = (function () {
 
             });
 
-            this.canvas.addEventListener('mouseup', (event) => {
+            this.canvas.addEventListener('mouseup', (event: MouseEvent) => {
                 const wasLeftMouse = event.button === 0;
 
                 if (this.controlsLocked || !this.isSpawned || !wasLeftMouse) {
@@ -132,7 +144,7 @@ export const Player = (function () {
             });
         }
 
-        getMouseDirection() {
+        getMouseDirection(): Vector2Type {
             if (!this.isSpawned) {
                 return new Vector2(0, 0);
             }
@@ -149,7 +161,7 @@ export const Player = (function () {
             return new Vector2(Math.cos(angle), Math.sin(angle)).normalize();
         }
 
-        updateMovementControls() {
+        updateMovementControls(): void {
             const movementVector = new Vector2(0, 0);
 
             if (this.keys[INPUT_RIGHT]) {
@@ -169,7 +181,7 @@ export const Player = (function () {
             this.body.velocity = this.body.velocity.lerp(targetVelocity, PLAYER_VELOCITY_SMOOTHNESS);
         }
 
-        update(deltaTime) {
+        update(deltaTime: number): void {
             super.update(deltaTime);
             this.updateMovementControls();
 
@@ -182,7 +194,7 @@ export const Player = (function () {
             }
         }
 
-        render(context, offset, scale) {
+        render(context: any, offset: Vector2Type, scale: number): void {
             const circleSize = Math.max(this.body.size.x, this.body.size.y) * scale;
             const centerX = (this.body.position.x + this.body.size.x / 2 + offset.x) * scale;
             const centerY = (this.body.position.y + this.body.size.y / 2 + offset.y) * scale;
@@ -249,7 +261,7 @@ export const Player = (function () {
             const accentDistance = radius * 0.85;
 
             for (let i = 0; i < 4; i++) {
-                const angle = (i / 4) * Math.PI * 2 + time * 0.3;
+                const angle = (i / spikes) * Math.PI * 2 + time * 0.3;
                 const accentX = centerX + Math.cos(angle) * accentDistance;
                 const accentY = centerY + Math.sin(angle) * accentDistance;
 

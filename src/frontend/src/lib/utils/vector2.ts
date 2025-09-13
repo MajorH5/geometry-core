@@ -1,34 +1,37 @@
 export const Vector2 = (function () {
     return class Vector2 {
-        constructor(x, y) {
+        public x: number;
+        public y: number;
+
+        constructor(x: number, y: number) {
             this.x = x;
             this.y = y;
         }
 
-        add(vector) {
+        add(vector: Vector2): Vector2 {
             if (!(vector instanceof Vector2)) throw new Error("nah cant do that vec2s only pls.")
             return new Vector2(this.x + vector.x, this.y + vector.y);
         }
 
-        subtract(vector) {
+        subtract(vector: Vector2): Vector2 {
             if (!(vector instanceof Vector2)) throw new Error("nah cant do that vec2s only pls.")
             return new Vector2(this.x - vector.x, this.y - vector.y);
         }
 
-        multiply(vector) {
+        multiply(vector: Vector2): Vector2 {
             if (!(vector instanceof Vector2)) throw new Error("nah cant do that vec2s only pls.")
             return new Vector2(this.x * vector.x, this.y * vector.y);
         }
 
-        scale(scalar) {
+        scale(scalar: number): Vector2 {
             return new Vector2(this.x * scalar, this.y * scalar);
         }
 
-        div(divisor) {
+        div(divisor: number): Vector2 {
             return new Vector2(this.x / divisor, this.y / divisor);
         }
 
-        lerp(target, t) {
+        lerp(target: Vector2, t: number): Vector2 {
             if (!(target instanceof Vector2)) throw new Error("nah cant do that vec2s only pls.")
             return new Vector2(
                 this.x + (target.x - this.x) * t,
@@ -36,7 +39,7 @@ export const Vector2 = (function () {
             );
         }
 
-        normalize() {
+        normalize(): Vector2 {
             const magnitude = Math.sqrt(this.x * this.x + this.y * this.y);
             if (magnitude === 0) {
                 return new Vector2(0, 0);

@@ -1,16 +1,29 @@
-import { Replicator } from "./network/replicator.js";
-import { Constants } from "./utils/constants.js";
+import { Replicator } from "./network/replicator.ts";
+import { Constants } from "./utils/constants.ts";
 
 import { Player } from "./logic/gameobjects/player.js";
 import { World } from "./logic/world.js";
 import { Vector2 } from "./utils/vector2.js";
-import { TheCore } from "./logic/gameobjects/the-core.js";
+import { TheCore } from "./logic/gameobjects/the-core.ts";
 
 export const GeometryCore = (function () {
     return class GeometryCore {
-        constructor(canvas) {
+        private canvas: HTMLCanvasElement;
+        private context: CanvasRenderingContext2D;
+        private localPlayer: Player;
+        private replicator: Replicator;
+        private initialized: boolean;
+        private isRunning: boolean;
+        private lastFrameTime: number | null;
+        private world: World | null;
+
+        constructor(canvas: HTMLCanvasElement) {
             this.canvas = canvas;
-            this.context = canvas.getContext("2d");
+            const context = canvas.getContext("2d");
+            if (!context) {
+                throw new Error("Could not get 2D context from canvas");
+            }
+            this.context = context;
 
             this.localPlayer = new Player(true, canvas);
             this.replicator = new Replicator(Constants.SERVER_WS_URL);
@@ -31,15 +44,14 @@ export const GeometryCore = (function () {
             this.world.camera.setSubject(this.localPlayer);
         }
 
-
-        initialize() {
+        initialize(): void {
             if (this.initialized) {
                 return;
             }
 
             this.initialized = true;
 
-            const dpr = window.devicePixelRatio || 1;
+            const dpr: number = window.devicePixelRatio || 1;
 
             this.canvas.width = Constants.CANVAS_SIZE.x * dpr;
             this.canvas.height = Constants.CANVAS_SIZE.y * dpr;
@@ -50,25 +62,25 @@ export const GeometryCore = (function () {
             this.context.scale(dpr, dpr);
 
             this.context.imageSmoothingEnabled = false;
-            this.context.textRenderingOptimization = 'optimizeSpeed';
+            (this.context as any).textRenderingOptimization = 'optimizeSpeed';
         }
 
-        start() {
+        start(): void {
             if (this.isRunning) {
                 return;
             }
 
             this.isRunning = true;
-            this.loop(1 / 60);
+            this.loop();
         }
 
-        loop() {
+        private loop(): void {
             if (!this.isRunning) {
                 return;
             }
 
-            const now = Date.now();
-            const deltaTime = this.lastFrameTime !== null ? now - this.lastFrameTime : 1 / 60;
+            const now: number = Date.now();
+            const deltaTime: number = this.lastFrameTime !== null ? now - this.lastFrameTime : 1 / 60;
 
             this.update(deltaTime);
             this.render();
@@ -77,7 +89,7 @@ export const GeometryCore = (function () {
             requestAnimationFrame(() => this.loop());
         }
 
-        stop() {
+        stop(): void {
             if (!this.isRunning) {
                 return;
             }
@@ -85,13 +97,13 @@ export const GeometryCore = (function () {
             this.isRunning = false;
         }
 
-        update(deltaTime) {
+        private update(deltaTime: number): void {
             if (this.world !== null) {
                 this.world.update(deltaTime);
             }
         }
 
-        render() {
+        private render(): void {
             this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.context.translate(-0.5, -0.5);
             

@@ -1,10 +1,16 @@
-import { Vector2 } from "../../utils/vector2.js";
+import { Vector2 } from "../../utils/vector2";
 import { GameObject } from "./gameobject.js";
-import { Projectile } from "./projectiles/projectile.js";
+import { Projectile } from "./projectiles/projectile.ts";
+
+type Vector2Type = InstanceType<typeof Vector2>;
 
 export const Entity = (function () {
     return class Entity extends GameObject {
-        constructor(maxHealth, bodyConfig) {
+        maxHealth: number;
+        health: number;
+        healtbarOffset: number;
+
+        constructor(maxHealth: number, bodyConfig: any) {
             super(bodyConfig);
 
             this.maxHealth = maxHealth || 100;
@@ -12,7 +18,7 @@ export const Entity = (function () {
             this.healtbarOffset = 10;
         }
 
-        emitProjectiles(angle, projectileInfo) {
+        emitProjectiles(angle: number, projectileInfo: any): void {
             if (!this.isSpawned || this.isDead()) {
                 return;
             }
@@ -25,7 +31,7 @@ export const Entity = (function () {
             }
         }
 
-        damage(amount) {
+        damage(amount: number): void {
             if (amount <= 0) return;
 
             this.health = Math.max(0, this.health - amount);
@@ -35,21 +41,21 @@ export const Entity = (function () {
             }
         }
 
-        heal(amount) {
+        heal(amount: number): void {
             if (amount <= 0) return;
 
             this.health = Math.min(this.maxHealth, this.health + amount);
         }
 
-        isDead() {
+        isDead(): boolean {
             return this.health <= 0;
         }
 
-        isAlive() {
+        isAlive(): boolean {
             return this.health > 0;
         }
 
-        render(context, offset, scale) {
+        render(context: any, offset: Vector2Type, scale: number): void {
             super.render(context, offset, scale);
 
             const barWidth = this.body.size.x * scale;

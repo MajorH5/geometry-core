@@ -1,12 +1,20 @@
 import { ParticleManager } from "../vfx/particles/particleManager.js";
-import { Physics } from "../physics/physics.js";
-import { Grid } from "../vfx/grid.js";
-import { Camera } from "./camera.js";
-import { Constants } from "../utils/constants.js";
+import { Physics } from "../physics/physics.ts";
+import { Grid } from "../vfx/grid.ts";
+import { Camera } from "./camera.ts";
+import { Constants } from "../utils/constants.ts";
 
 export const World = (function () {
     return class World {
-        constructor(worldSize, replicator) {
+        worldSize: any;
+        gameObjects: any[];
+        physics: InstanceType<typeof Physics>;
+        particleManager: ParticleManager;
+        camera: Camera;
+        replicator: any;
+        visualEffects: any[];
+
+        constructor(worldSize: any, replicator: any) {
             this.worldSize = worldSize;
             this.gameObjects = [];
             this.physics = new Physics(worldSize);
@@ -20,7 +28,7 @@ export const World = (function () {
             ];
         }
 
-        spawn(gameObject, objectId = -1) {
+        spawn(gameObject: any, objectId: number = -1): void {
             if (gameObject.isSpawned) {
                 return;
             }
@@ -32,7 +40,7 @@ export const World = (function () {
             gameObject.onSpawn(this, objectId);
         }
 
-        despawn(gameObject) {
+        despawn(gameObject: any): void {
             const index = this.gameObjects.indexOf(gameObject);
 
             if (index === -1) {
@@ -45,10 +53,10 @@ export const World = (function () {
             gameObject.onDespawn();
         }
 
-        update(deltaTime) {
+        update(deltaTime: number): void {
             this.physics.update(deltaTime);
 
-            const toDespawn = [];
+            const toDespawn: any[] = [];
 
             for (let i = 0; i < this.gameObjects.length; i++) {
                 const gameObject = this.gameObjects[i];
@@ -69,7 +77,7 @@ export const World = (function () {
             this.particleManager.update(deltaTime);
         }
 
-        render(context) {
+        render(context: any): void {
             const cameraOffset = this.camera.getOffset();
             const cameraScale = this.camera.getScale();
 
