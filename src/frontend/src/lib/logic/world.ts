@@ -1,31 +1,46 @@
-import { ParticleManager } from "../vfx/particles/particleManager.js";
+import { ParticleManager } from "../vfx/particles/particleManager.ts";
 import { Physics } from "../physics/physics.ts";
 import { Grid } from "../vfx/grid.ts";
 import { Camera } from "./camera.ts";
 import { Constants } from "../utils/constants.ts";
+import type { Replicator } from "../network/replicator.ts";
+import type { GameObject } from "./gameobjects/gameobject.ts";
+import type { Vector2 } from "../utils/vector2.ts";
+
+type InstanceVector2 = InstanceType<typeof Vector2>;
+type InstanceReplicator = InstanceType<typeof Replicator>;
+type InstanceGameObject = InstanceType<typeof GameObject>;
+type InstancePhysics = InstanceType<typeof Physics>;
+type InstanceCamera = InstanceType<typeof Camera>;
 
 export const World = (function () {
     return class World {
-        worldSize: any;
-        gameObjects: any[];
-        physics: InstanceType<typeof Physics>;
+        worldSize: InstanceVector2;
+        gameObjects: InstanceGameObject[];
+        physics: InstancePhysics;
         particleManager: ParticleManager;
-        camera: Camera;
-        replicator: any;
+        camera: InstanceCamera;
+        replicator: InstanceReplicator;
         visualEffects: any[];
+        gameObjectLookup: Map<number, InstanceGameObject>;
 
-        constructor(worldSize: any, replicator: any) {
+        constructor(worldSize: InstanceVector2, replicator: InstanceReplicator) {
             this.worldSize = worldSize;
             this.gameObjects = [];
             this.physics = new Physics(worldSize);
             this.particleManager = new ParticleManager();
             this.camera = new Camera();
+            this.gameObjectLookup = new Map();
             this.replicator = replicator;
 
             this.visualEffects = [
                 // new Grid(worldSize.x, worldSize.y),
                 new Grid(Constants.CANVAS_SIZE.x, Constants.CANVAS_SIZE.y),
             ];
+        }
+
+        getReplicator () {
+            return this.replicator;
         }
 
         spawn(gameObject: any, objectId: number = -1): void {
@@ -36,11 +51,12 @@ export const World = (function () {
             this.gameObjects.push(gameObject);
             this.physics.add(gameObject.body);
             this.gameObjects.sort((a, z) => a.renderPriority - z.renderPriority);
+            this.gameObjectLookup.set(objectId, gameObject);
 
             gameObject.onSpawn(this, objectId);
         }
 
-        despawn(gameObject: any): void {
+        despawn(gameObject: InstanceGameObject): void {
             const index = this.gameObjects.indexOf(gameObject);
 
             if (index === -1) {
@@ -50,6 +66,8 @@ export const World = (function () {
 
             this.gameObjects.splice(index, 1);
             this.physics.remove(gameObject.body);
+            this.gameObjectLookup.set(gameObject.objectId, gameObject);
+
             gameObject.onDespawn();
         }
 

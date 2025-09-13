@@ -1,6 +1,7 @@
 import { Body as PhysicsBody } from "../../physics/body";
 import { Constants } from "../../utils/constants";
 import { Vector2 } from "../../utils/vector2";
+import type { World } from "../world";
 
 type Vector2Type = InstanceType<typeof Vector2>;
 
@@ -8,7 +9,7 @@ export const GameObject = (function () {
     return class GameObject {
         body: InstanceType<typeof PhysicsBody>;
         isSpawned: boolean;
-        world: any;
+        world: InstanceType<typeof World> | null;
         elapsedTime: number;
         objectId: number;
         renderPriority: number;
@@ -77,7 +78,7 @@ export const GameObject = (function () {
             return this.body.size;
         }
 
-        onSpawn(world: any, objectId: number): void {
+        onSpawn(world: InstanceType<typeof World>, objectId: number): void {
             this.isSpawned = true;
             this.world = world;
             this.objectId = objectId;
@@ -86,6 +87,7 @@ export const GameObject = (function () {
         onDespawn(): void {
             this.isSpawned = false;
             this.world = null;
+            this.objectId = -1;
         }
 
         despawn(): void {
@@ -100,7 +102,7 @@ export const GameObject = (function () {
             this.elapsedTime += deltaTime;
         }
 
-        render(context: any, offset: Vector2Type, scale: number): void {
+        render(context: CanvasRenderingContext2D, offset: Vector2Type, scale: number): void {
             if (Constants.DEBUG_MODE) {
                 this.body.render(context, offset, scale);
             }

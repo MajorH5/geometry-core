@@ -46,5 +46,13 @@ export const Vector2 = (function () {
             }
             return new Vector2(this.x / magnitude, this.y / magnitude);
         }
+
+        floor (): Vector2 {
+            return new Vector2(Math.floor(this.x), Math.floor(this.y))
+        }
+
+        equals (vector: Vector2): boolean {
+            return this.x === vector.x && this.y === vector.y;
+        }
     };
 })();

@@ -1,6 +1,7 @@
 import { ProjectileInfo } from "./projectiles/projectileInfo.ts";
 import { Vector2 } from "../../utils/vector2";
 import { Entity } from "./entity.ts";
+import { Player as NetworkedPlayer } from "../../module_bindings/player_type.ts";
 
 type Vector2Type = InstanceType<typeof Vector2>;
 
@@ -23,19 +24,23 @@ export const Player = (function () {
         lastAttack: number;
         rateOfFire: number;
         currentWeapon: any;
+        playerName: string;
+        isFiring: boolean;
 
         constructor(isLocalPlayer: boolean = false, canvas: any) {
             super(100, {
                 size: new Vector2(50, 50)
             })
 
+            this.playerName = 'You';
             this.canvas = canvas;
             this.isLocalPlayer = isLocalPlayer;
             this.controlsLocked = false;
             this.mousePosition = new Vector2(-1, -1);
             this.attackAngle = 0;
             this.keys = {};
-
+            
+            this.isFiring = false;
             this.lastAttack = -Infinity;
             this.rateOfFire = 1 / 3;
             this.currentWeapon = new ProjectileInfo({
@@ -52,13 +57,20 @@ export const Player = (function () {
             this.renderPriority = 10;
         }
 
+        loadState (networkedPlayer: NetworkedPlayer) {
+            this.playerName = networkedPlayer.name.substring(0, 10);
+            this.setPosition(new Vector2(networkedPlayer.x, networkedPlayer.y));
+            this.attackAngle = networkedPlayer.attackAngle * (Math.PI / 180);
+            this.isFiring = networkedPlayer.isFiring;
+        }
+
         canFireProjectile(): boolean {
-            return ((Date.now() - this.lastAttack) / 1000) >= this.rateOfFire;
+            return this.isFiring && ((Date.now() - this.lastAttack) / 1000) >= this.rateOfFire;
         }
 
         bindControls(): void {
             document.addEventListener('keydown', (event) => {
-                if (this.controlsLocked || !this.isSpawned || this.world.isPaused) {
+                if (this.controlsLocked || !this.isSpawned) {
                     return;
                 }
 
@@ -126,26 +138,27 @@ export const Player = (function () {
                     return;
                 }
 
-
+                this.isFiring = true;
             });
 
             this.canvas.addEventListener('mouseup', (event: MouseEvent) => {
                 const wasLeftMouse = event.button === 0;
 
-                if (this.controlsLocked || !this.isSpawned || !wasLeftMouse) {
+                if (!wasLeftMouse) {
                     return;
                 }
 
-                // TODO
+                this.isFiring = false;
             });
 
             this.canvas.addEventListener('mouseleave', () => {
+                this.isFiring = false;
                 this.mousePosition = new Vector2(-1, -1);
             });
         }
 
         getMouseDirection(): Vector2Type {
-            if (!this.isSpawned) {
+            if (this.world === null) {
                 return new Vector2(0, 0);
             }
 
@@ -183,14 +196,29 @@ export const Player = (function () {
 
         update(deltaTime: number): void {
             super.update(deltaTime);
-            this.updateMovementControls();
-
-            const attackDirection = this.getMouseDirection();
-            this.attackAngle = Math.atan2(attackDirection.y, attackDirection.x);
+            
+            if (this.isLocalPlayer) {
+                this.updateMovementControls();
+                const attackDirection = this.getMouseDirection();
+                this.attackAngle = Math.atan2(attackDirection.y, attackDirection.x);
+            }
 
             if (this.canFireProjectile() && this.currentWeapon !== null) {
                 this.emitProjectiles(this.attackAngle, this.currentWeapon);
                 this.lastAttack = Date.now();
+            }
+
+            // replicate to server
+            if (this.world !== null && this.isLocalPlayer && this.objectId !== -1) {
+                const replicator = this.world.getReplicator()
+
+                if (replicator.isConnected()) {
+                    replicator.movePlayer(this.objectId, this.body.position.x, this.body.position.y);
+                    
+                    let attackAngleDeg = this.attackAngle * (180 / Math.PI);
+                    attackAngleDeg = ((attackAngleDeg % 360) + 360) % 360;
+                    replicator.updateAttack(this.objectId, this.isFiring, Math.floor(attackAngleDeg));
+                }
             }
         }
 
@@ -336,13 +364,13 @@ export const Player = (function () {
             context.font = `Bold ${16 * scale}px "Courier New", monospace`;
 
             context.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            context.fillText('You',
+            context.fillText(this.playerName,
                 centerX + 1 * scale,
                 centerY + circleSize + 1 * scale
             );
 
             context.fillStyle = this.isLocalPlayer ? '#00B2E1' : '#FF5050';
-            context.fillText('You',
+            context.fillText(this.playerName,
                 centerX,
                 centerY + circleSize
             );

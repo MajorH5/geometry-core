@@ -12,8 +12,8 @@ public static partial class Module
         public string Name = "";
         public int Health;
         public int Speed;
-        public int Attack;
-        public int AttackSpeed;
+        public bool IsFiring;
+        public int AttackAngle;
         public int BulletCount;
         public bool IsDead;
         public bool IsOnline;
@@ -31,37 +31,37 @@ public static partial class Module
     public static void MovePlayer(ReducerContext ctx, int playerId, float newX, float newY)
     {
         var player = ctx.Db.Player.Id.Find(playerId);
-        if (player is null) { Log.Warn($"Player {playerId} not found!"); return; }
-        if (player.IsDead) { Log.Warn($"{player.Name} is dead and cannot move."); return; }
+        // if (player is null) { Log.Warn($"Player {playerId} not found!"); return; }
+        // if (player.IsDead) { Log.Warn($"{player.Name} is dead and cannot move."); return; }
 
-        var world = ctx.Db.World.Id.Find(1);
-        if (world is null)
-        {
-            Log.Warn("World not found, cannot move player.");
-            return;
-        }
+        // var world = ctx.Db.World.Id.Find(1);
+        // if (world is null)
+        // {
+        //     Log.Warn("World not found, cannot move player.");
+        //     return;
+        // }
 
         // Clamp new position within world bounds
-        float clampedX = Math.Clamp(newX, -world.Width / 2, world.Width / 2);
-        float clampedY = Math.Clamp(newY, -world.Height / 2, world.Height / 2);
+        // float clampedX = Math.Clamp(newX, -world.Width / 2, world.Width / 2);
+        // float clampedY = Math.Clamp(newY, -world.Height / 2, world.Height / 2);
 
         // Check collision with blocks
-        foreach (var block in ctx.Db.Block.Iter())
-        {
-            if (block.IsDestroyed) continue;
+        // foreach (var block in ctx.Db.Block.Iter())
+        // {
+        //     if (block.IsDestroyed) continue;
 
-            // Assuming players and blocks occupy integer grid positions
-            if (MathF.Abs(block.X - clampedX) < 1 &&
-                MathF.Abs(block.Y - clampedY) < 1)
-            {
-                Log.Info($"{player.Name} cannot move to ({clampedX}, {clampedY}) - blocked by Block {block.Id}");
-                return; // Cancel movement
-            }
-        }
+        //     // Assuming players and blocks occupy integer grid positions
+        //     if (MathF.Abs(block.X - clampedX) < 1 &&
+        //         MathF.Abs(block.Y - clampedY) < 1)
+        //     {
+        //         Log.Info($"{player.Name} cannot move to ({clampedX}, {clampedY}) - blocked by Block {block.Id}");
+        //         return; // Cancel movement
+        //     }
+        // }
 
         // Update player position if not blocked
-        player.X = clampedX;
-        player.Y = clampedY;
+        player.X = newX;
+        player.Y = newY;
         ctx.Db.Player.Id.Update(player);
 
         Log.Info($"{player.Name} moved to ({player.X}, {player.Y})");
@@ -87,7 +87,7 @@ public static partial class Module
     }
 
     [Reducer(ReducerKind.ClientConnected)]
-    public static void ClientConnected(ReducerContext ctx, string Username)
+    public static void ClientConnected(ReducerContext ctx)
     {
         Log.Info($"Connect {ctx.Sender}");
 
@@ -103,12 +103,12 @@ public static partial class Module
         {
             ctx.Db.Player.Insert(new Player
             {
-                Name = Username,
+                Name = "PlayerGuy",
                 Identity = ctx.Sender,
                 Health = 100,
                 Speed = 10,
-                Attack = 10,
-                AttackSpeed = 1,
+                IsFiring = false,
+                AttackAngle = 0,
                 BulletCount = 1,
                 IsDead = false,
                 IsOnline = true,
@@ -163,27 +163,17 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void UpdateAttack(ReducerContext ctx, int playerId, int amount)
+    public static void UpdateAttack(ReducerContext ctx, int playerId, bool isFiring, int attackAngle)
     {
         var player = ctx.Db.Player.Id.Find(playerId);
-        if (player is null) { Log.Warn($"Player {playerId} not found!"); return; }
-        if (player.IsDead) { Log.Warn($"{player.Name} is dead. Attack cannot be changed."); return; }
+        // if (player is null) { Log.Warn($"Player {isfiring} not found!"); return; }
+        // if (player.IsDead) { Log.Warn($"{player.Name} is dead. Attack cannot be changed."); return; }
 
-        player.Attack += amount;
+        player.IsFiring = isFiring;
+        player.AttackAngle = attackAngle;
         ctx.Db.Player.Id.Update(player);
-        Log.Info($"{player.Name}'s Attack updated to {player.Attack}");
-    }
 
-    [Reducer]
-    public static void UpdateAttackSpeed(ReducerContext ctx, int playerId, int amount)
-    {
-        var player = ctx.Db.Player.Id.Find(playerId);
-        if (player is null) { Log.Warn($"Player {playerId} not found!"); return; }
-        if (player.IsDead) { Log.Warn($"{player.Name} is dead. AttackSpeed cannot be changed."); return; }
-
-        player.AttackSpeed += amount;
-        ctx.Db.Player.Id.Update(player);
-        Log.Info($"{player.Name}'s AttackSpeed updated to {player.AttackSpeed}");
+        // Log.Info($"{player.Name}'s Attack updated to {player.Attack}");
     }
 
     [Reducer]
@@ -219,7 +209,7 @@ public static partial class Module
             Y = player.Y,
             VelocityX = velocityX,
             VelocityY = velocityY,
-            Damage = player.Attack,
+            Damage = 10,
             Angle = angleDeg,
             FromEnemy = false
         });

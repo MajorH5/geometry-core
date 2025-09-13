@@ -1,6 +1,7 @@
 import { DbConnection } from '../module_bindings';
 import { Player } from '../module_bindings';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
+import { Vector2 } from '../utils/vector2';
 
 export class Replicator {
     private url: string;
@@ -8,10 +9,12 @@ export class Replicator {
     private conn: DbConnection | null = null;
     private identity: Identity | null = null;
     private connected: boolean = false;
+    private cache: Map<string, any>;
 
     constructor(url: string, moduleName: string) {
         this.url = url;
         this.moduleName = moduleName;
+        this.cache = new Map();
     }
 
     public async connect(): Promise<void> {
@@ -32,10 +35,11 @@ export class Replicator {
                     localStorage.setItem('auth_token', token);
                 }
 
-                // Subscribe to all tables to trigger ClientConnected reducer
-                this.subscribeToTables(['SELECT * FROM Player']);
-                
+                // allow handlers to bind first
                 resolve();
+                
+                // Subscribe to all tables to trigger ClientConnected reducer
+                this.subscribeToTables();
             };
 
             const onDisconnect = () => {
@@ -54,7 +58,7 @@ export class Replicator {
             const authToken = typeof localStorage !== 'undefined' 
                 ? localStorage.getItem('auth_token') || '' 
                 : '';
-                    
+                
             this.conn = DbConnection.builder()
                 .withUri(this.url)
                 .withModuleName(this.moduleName)
@@ -63,13 +67,12 @@ export class Replicator {
                 .onDisconnect(onDisconnect)
                 .onConnectError(onConnectError)
                 .build();
+            
         });
     }
 
-    private subscribeToTables(queries: string[]): void {
+    private subscribeToTables(): void {
         if (!this.conn) return;
-
-        console.log("subscribe")
 
         this.conn
             .subscriptionBuilder()
@@ -88,62 +91,46 @@ export class Replicator {
     }
 
     // Reducer calls - using the correct conn.reducers API
-    public async movePlayer(playerId: number, newX: number, newY: number): Promise<void> {
+    public movePlayer(playerId: number, newX: number, newY: number): void {
         if (!this.conn) throw new Error('Not connected');
+
+        const newPosition = new Vector2(newX, newY).floor();
+        const oldPosition = this.cache.get('LocalPlayerPosition');
+
+        if (oldPosition && newPosition.equals(oldPosition)) {
+            return;
+        }
         
+        this.cache.set('LocalPlayerPosition', newPosition);
+
         try {
-            await this.conn.reducers.movePlayer(playerId, newX, newY);
-            console.log(`Moved player ${playerId} to (${newX}, ${newY})`);
+            this.conn.reducers.movePlayer(playerId, newX, newY);
         } catch (error) {
             console.error('Failed to move player:', error);
             throw error;
         }
     }
 
-    public async updateHealth(playerId: number, amount: number): Promise<void> {
+    public updateAttack(playerId: number, isFiring: boolean, attackAngle: number): void {
         if (!this.conn) throw new Error('Not connected');
-        
-        try {
-            await this.conn.reducers.updateHealth(playerId, amount);
-            console.log(`Updated player ${playerId} health by ${amount}`);
-        } catch (error) {
-            console.error('Failed to update health:', error);
-            throw error;
-        }
-    }
 
-    public async updateSpeed(playerId: number, amount: number): Promise<void> {
-        if (!this.conn) throw new Error('Not connected');
-        
-        try {
-            await this.conn.reducers.updateSpeed(playerId, amount);
-            console.log(`Updated player ${playerId} speed by ${amount}`);
-        } catch (error) {
-            console.error('Failed to update speed:', error);
-            throw error;
-        }
-    }
+        const oldIsFiring = this.cache.get('LocalPlayerIsFiring');
+        const oldAttackAngle = this.cache.get('LocalPlayerAttackAngle');
 
-    public async updateAttack(playerId: number, amount: number): Promise<void> {
-        if (!this.conn) throw new Error('Not connected');
+        if (
+            oldIsFiring !== undefined && oldIsFiring === isFiring &&
+            oldAttackAngle !== undefined && oldAttackAngle === attackAngle
+        ) {
+            return;
+        }
+
+        this.cache.set('LocalPlayerIsFiring', isFiring);
+        this.cache.set('LocalPlayerAttackAngle', attackAngle);
         
         try {
-            await this.conn.reducers.updateAttack(playerId, amount);
-            console.log(`Updated player ${playerId} attack by ${amount}`);
+            this.conn.reducers.updateAttack(playerId, isFiring, attackAngle);
         } catch (error) {
             console.error('Failed to update attack:', error);
-            throw error;
-        }
-    }
-
-    public async updateAttackSpeed(playerId: number, amount: number): Promise<void> {
-        if (!this.conn) throw new Error('Not connected');
-        
-        try {
-            await this.conn.reducers.updateAttackSpeed(playerId, amount);
-            console.log(`Updated player ${playerId} attack speed by ${amount}`);
-        } catch (error) {
-            console.error('Failed to update attack speed:', error);
             throw error;
         }
     }
@@ -173,7 +160,7 @@ export class Replicator {
 
     public getMyPlayer(): Player | undefined {
         if (!this.conn || !this.identity) return undefined;
-        return this.conn.db.player.findByIdentity(this.identity);
+        return this.getPlayers().find((player) => player.identity === this.identity);
     }
 
     // Event subscriptions - using the correct conn.db.table.onEvent API

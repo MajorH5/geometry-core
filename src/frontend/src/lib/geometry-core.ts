@@ -5,6 +5,7 @@ import { Player } from "./logic/gameobjects/player";
 import { World } from "./logic/world";
 import { Vector2 } from "./utils/vector2";
 import { TheCore } from "./logic/gameobjects/the-core";
+import type { Player } from "./module_bindings";
 
 export const GeometryCore = (function () {
     return class GeometryCore {
@@ -26,8 +27,8 @@ export const GeometryCore = (function () {
             this.context = context;
 
             this.localPlayer = new Player(true, canvas);
-            this.replicator = new Replicator(Constants.SERVER_WS_URL, Constants.GLOBAL_DB_NAME);
 
+            this.replicator = new Replicator(Constants.SERVER_WS_URL, Constants.GLOBAL_DB_NAME);
             this.initialized = false;
             this.isRunning = false;
             this.lastFrameTime = null;
@@ -39,13 +40,6 @@ export const GeometryCore = (function () {
             const core = new TheCore();
             this.world.spawn(core);
             core.setPosition(this.world.worldSize.div(2), true);
-
-            this.world.spawn(this.localPlayer);
-            this.world.camera.setSubject(this.localPlayer);
-
-            this.replicator.onPlayerUpdate(() => {
-                console.log("player changed")
-            })
         }
 
         initialize(): void {
@@ -67,8 +61,45 @@ export const GeometryCore = (function () {
 
             this.context.imageSmoothingEnabled = false;
             (this.context as any).textRenderingOptimization = 'optimizeSpeed';
-            
-            this.replicator.connect();
+
+            this.replicator.connect().then(() => {
+                this.replicator.onPlayerUpdate((ctx, oldNetworkedPlayer, newNetworkedPlayer) => {
+                    if (this.world === null) return;
+
+                    const isLocalPlayer = newNetworkedPlayer.identity.data === this.replicator.getIdentity()?.data;
+
+                    if (isLocalPlayer) {
+                        return;
+                    }
+
+                    const player = this.world.gameObjectLookup.get(newNetworkedPlayer.id) as InstanceType<typeof Player> | undefined;
+
+                    if (player) {
+                        player.loadState(newNetworkedPlayer);
+                    }
+                });
+
+                this.replicator.onPlayerInsert((ctx, networkedPlayer) => {
+                    if (this.world === null) return;
+
+                    const isLocalPlayer = networkedPlayer.identity.data === this.replicator.getIdentity()?.data;
+
+                    if (isLocalPlayer) {
+                        this.localPlayer.loadState(networkedPlayer)
+                        this.world.spawn(this.localPlayer, networkedPlayer.id);
+                        this.world.camera.setSubject(this.localPlayer);
+                        return;
+                    }
+
+                    const player = new Player(isLocalPlayer, this.canvas);
+                    player.loadState(networkedPlayer)
+                    this.world.spawn(player, networkedPlayer.id);
+                });
+
+                this.replicator.onPlayerDelete((ctx, player) => {
+                    
+                })
+            });
         }
 
         start(): void {
@@ -112,7 +143,7 @@ export const GeometryCore = (function () {
         private render(): void {
             this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
             this.context.translate(-0.5, -0.5);
-            
+
             if (this.world !== null) {
                 this.world.render(this.context);
             }

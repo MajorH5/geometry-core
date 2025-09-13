@@ -5,6 +5,6 @@ export const Constants = (function () {
         CANVAS_SIZE: new Vector2(800, 600),
         SERVER_WS_URL: 'ws://localhost:3000',
         GLOBAL_DB_NAME: 'geometry-core',
-        DEBUG_MODE: true,
+        DEBUG_MODE: false,
     } as const;
 })();
