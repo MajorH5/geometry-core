@@ -1,8 +1,22 @@
-export const Engine = (function () {
-    return class Engine {
+export const Physics = (function () {
+    return class Physics {
         constructor(worldSize) {
             this.worldSize = worldSize;
             this.bodies = [];
+        }
+
+        add (body) {
+            this.bodies.push(body);
+        }
+
+        remove (body) {
+            const index = this.bodies.indexOf(body);
+
+            if (index === -1) {
+                return;
+            }
+
+            this.bodies.splice(index, 1);
         }
 
         checkCollision(body1, body2) {
@@ -15,6 +29,8 @@ export const Engine = (function () {
         update(deltaTime) {
             for (let i = 0; i < this.bodies.length; i++) {
                 const body1 = this.bodies[i];
+
+                body1.position = body1.position.add(body1.velocity);
 
                 for (let j = 0; j < this.bodies.length; j++) {
                     if (i === j) {

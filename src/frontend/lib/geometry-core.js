@@ -1,4 +1,9 @@
+import { Replicator } from "./network/replicator.js";
 import { Constants } from "./utils/constants.js";
+
+import { Player } from "./logic/gameobjects/player.js";
+import { World } from "./logic/world.js";
+import { Vector2 } from "./utils/vector2.js";
 
 export const GeometryCore = (function () {
     return class GeometryCore {
@@ -6,9 +11,17 @@ export const GeometryCore = (function () {
             this.canvas = canvas;
             this.context = canvas.getContext("2d");
 
+            this.localPlayer = new Player(true, canvas);
+            this.replicator = new Replicator(Constants.SERVER_WS_URL);
+            
             this.initialized = false;
             this.isRunning = false;
             this.lastFrameTime = null;
+            
+            this.world = null;
+
+            this.world = new World(new Vector2(500, 5000), this.replicator);
+            this.world.spawn(this.localPlayer);
         }
 
 
@@ -42,8 +55,8 @@ export const GeometryCore = (function () {
             this.update(deltaTime);
             this.render();
             
-            requestAnimationFrame(() => this.loop());
             this.lastFrameTime = now;
+            requestAnimationFrame(() => this.loop());
         }
 
         stop () {
@@ -55,11 +68,17 @@ export const GeometryCore = (function () {
         }
 
         update (deltaTime) {
-
+            if (this.world !== null) {
+                this.world.update(deltaTime);
+            }
         }
 
         render () {
-            this.context.clearRect(0, 0, Constants.CANVAS_SIZE.x, Constants.CANVAS_SIZE.y);
+            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            
+            if (this.world !== null) {
+                this.world.render(this.context);
+            }
         }
     };
 })();
