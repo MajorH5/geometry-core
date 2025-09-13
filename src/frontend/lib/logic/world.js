@@ -1,45 +1,58 @@
+import { ParticleManager } from "../vfx/particles/particleManager.js";
 import { Physics } from "../physics/physics.js";
 
 export const World = (function () {
     return class World {
         constructor(worldSize, replicator) {
             this.worldSize = worldSize;
-            this.entities = [];
-
+            this.gameObjects = [];
             this.physics = new Physics(worldSize);
+            this.particleManager = new ParticleManager();
             this.replicator = replicator;
         }
 
-        spawn(entity) {
-            if (entity.isSpawned) {
+        spawn(gameObject, objectId = -1) {
+            if (gameObject.isSpawned) {
                 return;
             }
 
-            this.entities.push(entity);
-            this.physics.add(entity.body);
-            entity.onSpawn(this);
+            this.gameObjects.push(gameObject);
+            this.physics.add(gameObject.body);
+
+            gameObject.onSpawn(this, objectId);
         }
 
-        despawn(entity) {
-            const index = this.entities.indexOf(entity);
+        despawn(gameObject) {
+            const index = this.gameObjects.indexOf(gameObject);
 
             if (index === -1) {
                 // not found
                 return;
             }
 
-            this.entities.splice(index, 1);
-            this.physics.remove(entity.body);
-            entity.onDespawn();
+            this.gameObjects.splice(index, 1);
+            this.physics.remove(gameObject.body);
+            gameObject.onDespawn();
         }
 
         update(deltaTime) {
             this.physics.update(deltaTime);
 
-            for (let i = 0; i < this.entities.length; i++) {
-                const entity = this.entities[i];
-                entity.update(deltaTime);
+            for (let i = 0; i < this.gameObjects.length; i++) {
+                const gameObject = this.gameObjects[i];
+                gameObject.update(deltaTime);
             }
+
+            this.particleManager.update(deltaTime);
+        }
+
+        render(context) {
+            this.drawGrid(context, this.worldSize.x, this.worldSize.y);
+            for (let i = 0; i < this.gameObjects.length; i++) {
+                const gameObject = this.gameObjects[i];
+                gameObject.render(context);
+            }
+            this.particleManager.render(context);
         }
 
         drawGrid(context, width, height, spacing = 20, majorEvery = 5) {
@@ -94,15 +107,6 @@ export const World = (function () {
             context.stroke();
 
             context.restore();
-        }
-
-
-        render(context) {
-            this.drawGrid(context, this.worldSize.x, this.worldSize.y);
-            for (let i = 0; i < this.entities.length; i++) {
-                const entity = this.entities[i];
-                entity.render(context);
-            }
         }
     }
 })();

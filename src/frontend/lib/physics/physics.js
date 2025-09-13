@@ -5,11 +5,11 @@ export const Physics = (function () {
             this.bodies = [];
         }
 
-        add (body) {
+        add(body) {
             this.bodies.push(body);
         }
 
-        remove (body) {
+        remove(body) {
             const index = this.bodies.indexOf(body);
 
             if (index === -1) {
@@ -18,12 +18,14 @@ export const Physics = (function () {
 
             this.bodies.splice(index, 1);
         }
-
+        
         checkCollision(body1, body2) {
-            return body1.position.x >= body2.position.x &&
+            return (
                 body1.position.x < body2.position.x + body2.size.x &&
-                body1.position.y >= body2.position.y &&
-                body1.position.y < body2.position.y + body2.size.y
+                body1.position.x + body1.size.x > body2.position.x &&
+                body1.position.y < body2.position.y + body2.size.y &&
+                body1.position.y + body1.size.y > body2.position.y
+            );
         }
 
         update(deltaTime) {

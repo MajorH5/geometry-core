@@ -7,6 +7,7 @@ export const Body = (function () {
             this.position = config.position || new Vector2(0, 0);
             this.size = config.size || new Vector2(0, 0);
             this.velocity = config.velocity || new Vector2(0, 0);
+            this.solid = config.solid || false;
 
             this.collision = new Event();
         }

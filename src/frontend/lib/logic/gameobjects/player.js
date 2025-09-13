@@ -143,27 +143,103 @@ export const Player = (function () {
         render(context) {
             super.render(context);
             const circleSize = Math.max(this.body.size.x, this.body.size.y);
+            const centerX = this.body.position.x + circleSize / 2;
+            const centerY = this.body.position.y + circleSize / 2;
+            const radius = circleSize / 2;
+            const time = Date.now() * 0.001;
+
+            context.save();
+
+            const glowRadius = radius * 1.3;
+            const gradient = context.createRadialGradient(centerX, centerY, radius * 0.8, centerX, centerY, glowRadius);
+
+            if (this.isLocalPlayer) {
+                gradient.addColorStop(0, 'rgba(0, 178, 225, 0.3)');
+                gradient.addColorStop(1, 'rgba(0, 178, 225, 0)');
+            } else {
+                gradient.addColorStop(0, 'rgba(255, 80, 80, 0.3)');
+                gradient.addColorStop(1, 'rgba(255, 80, 80, 0)');
+            }
+
+            context.fillStyle = gradient;
+            context.beginPath();
+            context.arc(centerX, centerY, glowRadius, 0, Math.PI * 2);
+            context.fill();
 
             context.beginPath();
-            context.arc(
-                this.body.position.x + circleSize / 2,
-                this.body.position.y + circleSize / 2,
-                circleSize / 2,
-                0, Math.PI * 2
-            );
-            context.fillStyle = this.isLocalPlayer ? '#00B2E1' : 'red';
+            context.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            context.fillStyle = this.isLocalPlayer ? '#00B2E1' : '#FF5050';
             context.fill();
+
+            const coreRadius = radius * 0.6;
+            const spikes = 8;
+
+            context.beginPath();
+            for (let i = 0; i < spikes; i++) {
+                const angle = (i / spikes) * Math.PI * 2 + time * 0.5;
+                const outerRadius = coreRadius + Math.sin(time * 2 + i) * 3;
+                const innerRadius = coreRadius * 0.4;
+
+                const x1 = centerX + Math.cos(angle) * outerRadius;
+                const y1 = centerY + Math.sin(angle) * outerRadius;
+                const x2 = centerX + Math.cos(angle + Math.PI / spikes) * innerRadius;
+                const y2 = centerY + Math.sin(angle + Math.PI / spikes) * innerRadius;
+
+                if (i === 0) context.moveTo(x1, y1);
+                else context.lineTo(x1, y1);
+                context.lineTo(x2, y2);
+            }
             context.closePath();
-            context.lineWidth = 4;
-            context.strokeStyle = '#0085A8';
+
+            if (this.isLocalPlayer) {
+                context.fillStyle = 'rgba(255, 255, 255, 0.4)';
+            } else {
+                context.fillStyle = 'rgba(255, 200, 200, 0.4)';
+            }
+            context.fill();
+
+            context.lineWidth = 3;
+            context.strokeStyle = this.isLocalPlayer ? '#0085A8' : '#CC3333';
+            context.beginPath();
+            context.arc(centerX, centerY, radius, 0, Math.PI * 2);
             context.stroke();
 
+            const accentSize = radius * 0.15;
+            const accentDistance = radius * 0.85;
+
+            for (let i = 0; i < 4; i++) {
+                const angle = (i / 4) * Math.PI * 2 + time * 0.3;
+                const accentX = centerX + Math.cos(angle) * accentDistance;
+                const accentY = centerY + Math.sin(angle) * accentDistance;
+
+                context.beginPath();
+                context.arc(accentX, accentY, accentSize, 0, Math.PI * 2);
+                context.fillStyle = this.isLocalPlayer ? 'rgba(0, 178, 225, 0.8)' : 'rgba(255, 80, 80, 0.8)';
+                context.fill();
+
+                context.lineWidth = 1;
+                context.strokeStyle = this.isLocalPlayer ? '#FFFFFF' : '#FFCCCC';
+                context.stroke();
+            }
+
+            context.restore();
+
+            context.save();
             context.textAlign = 'center';
-            context.font = 'Bold 20px Arial';
+            context.font = 'Bold 16px "Courier New", monospace';
+
+            context.fillStyle = 'rgba(0, 0, 0, 0.7)';
             context.fillText('You',
-                this.body.position.x + circleSize / 2, 
-                this.body.position.y + circleSize / 2 + circleSize
+                centerX + 1,
+                centerY + circleSize + 1
             );
+
+            context.fillStyle = this.isLocalPlayer ? '#00B2E1' : '#FF5050';
+            context.fillText('You',
+                centerX,
+                centerY + circleSize
+            );
+            context.restore();
         }
 
     }

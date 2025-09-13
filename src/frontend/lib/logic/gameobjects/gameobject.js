@@ -8,6 +8,12 @@ export const GameObject = (function () {
 
             this.isSpawned = false;
             this.world = null;
+            this.elapsedTime = 0;
+            this.objectId = -1;
+        }
+
+        getElapsedTime () {
+            return this.elapsedTime;
         }
         
         setPosition (position, centerOn = false) {
@@ -22,9 +28,10 @@ export const GameObject = (function () {
             return this.position;
         }
 
-        onSpawn (world) {
+        onSpawn (world, objectId) {
             this.isSpawned = true;
-            this.world = world
+            this.world = world;
+            this.objectId = objectId;
         }
 
         onDespawn () {
@@ -41,7 +48,7 @@ export const GameObject = (function () {
         }
 
         update (deltaTime) {
-
+            this.elapsedTime += deltaTime;
         }
 
         render (context) {
