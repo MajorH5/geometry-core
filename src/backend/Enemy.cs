@@ -6,8 +6,9 @@ public static partial class Module
 {
     public static class EnemyTypeIds
     {
-        public const int SPIKER = 1;
-        public const int ENEMY2 = 2;
+        public const int RUSHER = 1;
+        public const int SHOOTER = 2;
+        public const int BLASTER = 3;
     }
     
     [SpacetimeDB.Type]
@@ -51,36 +52,54 @@ public static partial class Module
 
         ctx.Db.EnemyType.Insert(new EnemyType
         {
-            TypeId = EnemyTypeIds.SPIKER,
-            MaxHealth = 25,
+            TypeId = EnemyTypeIds.RUSHER,
+            MaxHealth = 100,
+            Speed = 1,
+            Size = 80,
+            ProjectileInfo = new ProjectileInfo
+            {
+                Amount = 0,
+                Speed = 0,
+                Size = 0,
+                Damage = 0,
+                Spread = 0,
+                Color = "#ff0000",
+                RateOfFire = 0,
+            }
+        });
+
+        ctx.Db.EnemyType.Insert(new EnemyType
+        {
+            TypeId = EnemyTypeIds.SHOOTER,
+            MaxHealth = 35,
             Speed = 3,
-            Size = 60,
+            Size = 40,
             ProjectileInfo = new ProjectileInfo
             {
                 Amount = 1,
-                Speed = 6,
-                Size = 10,
-                Damage = 10,
+                Speed = 10,
+                Size = 25,
+                Damage = 20,
                 Spread = 0,
-                Color = "#ff0000",
+                Color = "#412121ff",
                 RateOfFire = 1,
             }
         });
 
         ctx.Db.EnemyType.Insert(new EnemyType
         {
-            TypeId = EnemyTypeIds.ENEMY2,
-            MaxHealth = 35,
-            Speed = 4,
-            Size = 70,
+            TypeId = EnemyTypeIds.BLASTER,
+            MaxHealth = 50,
+            Speed = 2,
+            Size = 40,
             ProjectileInfo = new ProjectileInfo
             {
-                Amount = 3,
-                Speed = 2,
-                Size = 30,
+                Amount = 10,
+                Speed = 4,
+                Size = 20,
                 Damage = 10,
-                Spread = 0,
-                Color = "#ff0000",
+                Spread = 10,
+                Color = "#18046fff",
                 RateOfFire = 1,
             }
         });

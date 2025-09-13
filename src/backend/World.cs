@@ -103,7 +103,9 @@ public static partial class Module
 
         if (world.Tick % 60 == 0)
         {
-            SpawnEnemy(ctx, EnemyTypeIds.SPIKER, world.Width / 2, world.Height / 2);
+            SpawnEnemy(ctx, EnemyTypeIds.RUSHER, world.Width, world.Height / 2);
+            SpawnEnemy(ctx, EnemyTypeIds.SHOOTER, world.Width / 2, world.Height / 2);
+            SpawnEnemy(ctx, EnemyTypeIds.BLASTER, world.Width / 2, world.Height / 2);
         }
 
         /*
