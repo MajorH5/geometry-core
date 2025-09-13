@@ -1,21 +1,21 @@
-import { Replicator } from "./network/replicator.ts";
-import { Constants } from "./utils/constants.ts";
+import { Replicator } from "./network/replicator";
+import { Constants } from "./utils/constants";
 
-import { Player } from "./logic/gameobjects/player.js";
-import { World } from "./logic/world.js";
-import { Vector2 } from "./utils/vector2.js";
-import { TheCore } from "./logic/gameobjects/the-core.ts";
+import { Player } from "./logic/gameobjects/player";
+import { World } from "./logic/world";
+import { Vector2 } from "./utils/vector2";
+import { TheCore } from "./logic/gameobjects/the-core";
 
 export const GeometryCore = (function () {
     return class GeometryCore {
         private canvas: HTMLCanvasElement;
         private context: CanvasRenderingContext2D;
-        private localPlayer: Player;
+        private localPlayer: InstanceType<typeof Player>;
         private replicator: Replicator;
         private initialized: boolean;
         private isRunning: boolean;
         private lastFrameTime: number | null;
-        private world: World | null;
+        private world: InstanceType<typeof World> | null;
 
         constructor(canvas: HTMLCanvasElement) {
             this.canvas = canvas;
@@ -26,7 +26,7 @@ export const GeometryCore = (function () {
             this.context = context;
 
             this.localPlayer = new Player(true, canvas);
-            this.replicator = new Replicator(Constants.SERVER_WS_URL);
+            this.replicator = new Replicator(Constants.SERVER_WS_URL, Constants.GLOBAL_DB_NAME);
 
             this.initialized = false;
             this.isRunning = false;
@@ -63,6 +63,8 @@ export const GeometryCore = (function () {
 
             this.context.imageSmoothingEnabled = false;
             (this.context as any).textRenderingOptimization = 'optimizeSpeed';
+            
+            this.replicator.connect();
         }
 
         start(): void {
