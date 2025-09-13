@@ -6,8 +6,8 @@ const INPUT_RIGHT = 'right';
 const INPUT_UP = 'up';
 const INPUT_DOWN = 'down';
 
-const PLAYER_SPEED = 10;
-const PLAYER_VELOCITY_SMOOTHNESS = 0.16;
+const PLAYER_SPEED = 8.5;
+const PLAYER_VELOCITY_SMOOTHNESS = 0.175;
 
 export const Player = (function () {
     return class Player extends Entity {
@@ -146,20 +146,24 @@ export const Player = (function () {
 
             context.beginPath();
             context.arc(
-                this.body.position.x,
-                this.body.position.y,
+                this.body.position.x + circleSize / 2,
+                this.body.position.y + circleSize / 2,
                 circleSize / 2,
                 0, Math.PI * 2
             );
-            context.fillStyle = this.isLocalPlayer ? 'blue' : 'red';
+            context.fillStyle = this.isLocalPlayer ? '#00B2E1' : 'red';
             context.fill();
             context.closePath();
-            context.strokeStyle = 'black';
+            context.lineWidth = 4;
+            context.strokeStyle = '#0085A8';
             context.stroke();
 
             context.textAlign = 'center';
             context.font = 'Bold 20px Arial';
-            context.fillText('You', this.body.position.x, this.body.position.y + circleSize);
+            context.fillText('You',
+                this.body.position.x + circleSize / 2, 
+                this.body.position.y + circleSize / 2 + circleSize
+            );
         }
 
     }

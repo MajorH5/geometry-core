@@ -21,6 +21,10 @@ export const Vector2 = (function () {
             return new Vector2(this.x * scalar, this.y * scalar);
         }
 
+        div (divisor) {
+            return new Vector2(this.x / divisor, this.y / divisor);
+        }
+
         lerp(target, t) {
             return new Vector2(
                 this.x + (target.x - this.x) * t,
