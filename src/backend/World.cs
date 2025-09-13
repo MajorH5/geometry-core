@@ -46,6 +46,20 @@ public static partial class Module
 
         ctx.Db.World.Insert(world);
         Log.Info($"World created with size {world.Width}x{world.Height}");
+
+        ctx.Db.Block.Insert(new Block
+        {
+            X = 0,
+            Y = 0,
+            Health = 1000, // Big HP pool
+            IsDestroyed = false,
+            Cost = 0,
+            IsCore = true,
+            width = 50,
+            height = 50
+        });
+
+        Log.Info("Core block created at (0,0) with 1000 HP");
     }
 
     [Reducer]
@@ -210,22 +224,46 @@ public static partial class Module
         public int Health;
         public bool IsDestroyed;
         public int Cost;
+
+        public bool IsCore;
+        public int width;
+        public int height;
     }
 
     [Reducer]
-    public static void PlaceBlock(ReducerContext ctx, float x, float y, int health = 50)
+    [Reducer]
+    public static void PlaceBlock(ReducerContext ctx, float x, float y, int health = 50, int width = 5, int height = 5)
     {
-        // TODO: you could check if another block already exists at this tile
+        // Check for overlaps
+        foreach (var block in ctx.Db.Block.Iter())
+        {
+            if (block.IsDestroyed) continue;
+
+            bool overlapX = MathF.Abs(block.X - x) < (block.width / 2f + width / 2f);
+            bool overlapY = MathF.Abs(block.Y - y) < (block.height / 2f + height / 2f);
+
+            if (overlapX && overlapY)
+            {
+                Log.Warn($"Cannot place block at ({x},{y}) - overlaps with block {block.Id} at ({block.X},{block.Y})");
+                return; // cancel placement
+            }
+        }
+
+        // No overlaps -> insert block
         ctx.Db.Block.Insert(new Block
         {
             X = x,
             Y = y,
             Health = health,
-            IsDestroyed = false
+            IsDestroyed = false,
+            IsCore = false,
+            width = width,
+            height = height
         });
 
-        Log.Info($"Block placed at ({x}, {y}) with {health} HP");
+        Log.Info($"Block placed at ({x}, {y}) with {health} HP, size {width}x{height}");
     }
+
 
     [Reducer]
     public static void DamageBlock(ReducerContext ctx, int blockId, int damage)
@@ -286,6 +324,8 @@ public static partial class Module
             {
                 DamageBlock(ctx, block.Id, enemy.Attack);
                 Log.Info($"Enemy (#{enemy.Id}) attacked block {block.Id} at ({block.X},{block.Y})");
+                enemy.IsDead = true;
+                ctx.Db.Enemy.Id.Update(enemy);
                 return;
             }
         }
@@ -304,6 +344,8 @@ public static partial class Module
                     Log.Info($"Player (#{player.Id}) killed by enemy!");
                 }
                 ctx.Db.Player.Id.Update(player);
+                enemy.IsDead = true;
+                ctx.Db.Enemy.Id.Update(enemy);
                 return;
             }
         }
@@ -312,6 +354,8 @@ public static partial class Module
         if (MathF.Sqrt(nextX * nextX + nextY * nextY) < 1f)
         {
             Log.Info($"Enemy (#{enemy.Id}) damaged the core!");
+            enemy.IsDead = true;
+            ctx.Db.Enemy.Id.Update(enemy);
             return;
         }
 
