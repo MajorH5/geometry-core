@@ -48,9 +48,21 @@ export const World = (function () {
         update(deltaTime) {
             this.physics.update(deltaTime);
 
+            const toDespawn = [];
+
             for (let i = 0; i < this.gameObjects.length; i++) {
                 const gameObject = this.gameObjects[i];
                 gameObject.update(deltaTime);
+
+                if (!gameObject.isSpawned) {
+                    toDespawn.push(gameObject);
+                }
+            }
+
+            if (toDespawn.length > 0) {
+                for (let i = 0; i < toDespawn.length; i++) {
+                    this.despawn(toDespawn[i]);
+                }
             }
 
             this.camera.update(deltaTime);

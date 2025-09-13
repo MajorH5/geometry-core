@@ -1,3 +1,4 @@
+import { ProjectileInfo } from "./projectiles/projectileInfo.js";
 import { Vector2 } from "../../utils/vector2.js";
 import { Entity } from "./entity.js";
 
@@ -20,11 +21,24 @@ export const Player = (function () {
             this.isLocalPlayer = isLocalPlayer;
             this.controlsLocked = false;
             this.mousePosition = new Vector2(-1, -1);
+            this.attackAngle = 0;
             this.keys = {};
+
+            this.lastAttack = -Infinity;
+            this.rateOfFire = 1 / 3;
+            this.currentWeapon = new ProjectileInfo({
+                amount: 3,
+                speed: 10,
+                size: new Vector2(10, 10)
+            });
 
             if (this.isLocalPlayer) {
                 this.bindControls();
             }
+        }
+
+        canFireProjectile () {
+            return Date.now() - this.lastAttack >= this.rateOfFire;
         }
 
         bindControls() {
@@ -155,10 +169,17 @@ export const Player = (function () {
         update(deltaTime) {
             super.update(deltaTime);
             this.updateMovementControls();
+
+            const attackDirection = this.getMouseDirection();
+            this.attackAngle = Math.atan2(attackDirection.y, attackDirection.x);
+
+            if (this.canFireProjectile() && this.currentWeapon !== null) {
+                console.log("attacj!")
+                this.emitProjectiles(this.attackAngle, this.currentWeapon);
+            }
         }
 
         render(context, offset, scale) {
-            super.render(context, offset, scale);
             const circleSize = Math.max(this.body.size.x, this.body.size.y) * scale;
             const centerX = (this.body.position.x + this.body.size.x / 2 + offset.x) * scale;
             const centerY = (this.body.position.y + this.body.size.y / 2 + offset.y) * scale;
@@ -239,6 +260,60 @@ export const Player = (function () {
                 context.stroke();
             }
 
+            if (this.attackAngle !== -1) {
+                const attackDirection = new Vector2(Math.cos(this.attackAngle), Math.sin(this.attackAngle));
+
+                const indicatorOffset = radius * 1.15;
+                const indicatorStartX = centerX + attackDirection.x * indicatorOffset;
+                const indicatorStartY = centerY + attackDirection.y * indicatorOffset;
+
+                const indicatorLength = radius * 2;
+                const indicatorEndX = centerX + attackDirection.x * indicatorLength;
+                const indicatorEndY = centerY + attackDirection.y * indicatorLength;
+
+                const indicatorColor = this.isLocalPlayer ? '#40E0E0' : '#FF8080';
+                const indicatorGlowColor = this.isLocalPlayer ? '#80F0F0' : '#FFAAAA';
+
+                context.lineWidth = 3 * scale;
+                context.strokeStyle = indicatorColor;
+                context.beginPath();
+                context.moveTo(indicatorStartX, indicatorStartY);
+                context.lineTo(indicatorEndX, indicatorEndY);
+                context.stroke();
+
+                const arrowSize = 10 * scale;
+                const arrowAngle = Math.atan2(attackDirection.y, attackDirection.x);
+
+                context.fillStyle = indicatorColor;
+                context.beginPath();
+                context.moveTo(indicatorEndX, indicatorEndY);
+                context.lineTo(
+                    indicatorEndX - Math.cos(arrowAngle - 0.5) * arrowSize,
+                    indicatorEndY - Math.sin(arrowAngle - 0.5) * arrowSize
+                );
+                context.lineTo(
+                    indicatorEndX - Math.cos(arrowAngle + 0.5) * arrowSize,
+                    indicatorEndY - Math.sin(arrowAngle + 0.5) * arrowSize
+                );
+                context.closePath();
+                context.fill();
+
+                const pulse = Math.sin(time * 3) * 0.2 + 0.8;
+                context.globalAlpha = pulse;
+
+                context.shadowColor = indicatorGlowColor;
+                context.shadowBlur = 6 * scale;
+                context.lineWidth = 1.5 * scale;
+                context.strokeStyle = indicatorGlowColor;
+                context.beginPath();
+                context.moveTo(indicatorStartX, indicatorStartY);
+                context.lineTo(indicatorEndX, indicatorEndY);
+                context.stroke();
+
+                context.shadowBlur = 0;
+                context.globalAlpha = 1;
+            }
+
             context.restore();
 
             context.save();
@@ -257,6 +332,8 @@ export const Player = (function () {
                 centerY + circleSize
             );
             context.restore();
+
+            super.render(context, offset, scale);
         }
 
     }

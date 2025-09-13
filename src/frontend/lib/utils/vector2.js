@@ -35,5 +35,13 @@ export const Vector2 = (function () {
                 this.y + (target.y - this.y) * t
             );
         }
+
+        normalize() {
+            const magnitude = Math.sqrt(this.x * this.x + this.y * this.y);
+            if (magnitude === 0) {
+                return new Vector2(0, 0);
+            }
+            return new Vector2(this.x / magnitude, this.y / magnitude);
+        }
     };
 })();

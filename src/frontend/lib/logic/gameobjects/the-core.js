@@ -19,16 +19,16 @@ export const TheCore = (function () {
             const centerY = (this.body.position.y + this.body.size.y / 2 + offset.y) * scale;
             const baseRadius = (Math.max(this.body.size.x, this.body.size.y) / 2) * scale;
 
-            const pulse = Math.sin(this.getElapsedTime() * 0.002) * 10 * scale;
+            const pulse = Math.sin(this.getElapsedTimeMs() * 0.002) * 10 * scale;
             const radius = baseRadius + pulse;
 
             for (let i = 0; i < 7; i++) {
-                const layerPulse = (Math.sin(this.getElapsedTime() * 0.004 + i) * 5 + (i * 2)) * scale;
+                const layerPulse = (Math.sin(this.getElapsedTimeMs() * 0.004 + i) * 5 + (i * 2)) * scale;
                 const layerRadius = radius + layerPulse;
 
                 context.beginPath();
                 const wavePoints = 64;
-                const time = this.getElapsedTime() * 0.001;
+                const time = this.getElapsedTimeMs() * 0.001;
 
                 for (let p = 0; p <= wavePoints; p++) {
                     const angle = (p / wavePoints) * Math.PI * 2;
@@ -56,7 +56,7 @@ export const TheCore = (function () {
                 context.fill();
             }
 
-            const time = this.getElapsedTime() * 0.001;
+            const time = this.getElapsedTimeMs() * 0.001;
 
             for (let layer = 0; layer < 4; layer++) {
                 const layerTime = time + layer * 0.5;
@@ -139,7 +139,7 @@ export const TheCore = (function () {
             const outerWavePoints = 64;
             for (let p = 0; p <= outerWavePoints; p++) {
                 const angle = (p / outerWavePoints) * Math.PI * 2;
-                const time = this.getElapsedTime() * 0.001;
+                const time = this.getElapsedTimeMs() * 0.001;
 
                 const wave = Math.sin(angle * 6 + time * 2) * (radius * 0.04) +
                     Math.sin(angle * 10 - time * 1.8) * (radius * 0.02);

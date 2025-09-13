@@ -1,4 +1,6 @@
+import { Vector2 } from "../../utils/vector2.js";
 import { GameObject } from "./gameobject.js";
+import { Projectile } from "./projectiles/projectile.js";
 
 export const Entity = (function () {
     return class Entity extends GameObject {
@@ -10,12 +12,17 @@ export const Entity = (function () {
             this.healtbarOffset = 10;
         }
 
-        emitProjectile(angle, projectileInfo) {
+        emitProjectiles(angle, projectileInfo) {
             if (!this.isSpawned || this.isDead()) {
                 return;
             }
 
+            for (let i = 0; i < projectileInfo.amount; i++) {
+                const velocity = new Vector2(Math.cos(angle), Math.sin(angle)).scale(projectileInfo.speed);
+                const projectile = new Projectile(this.getCenter(), velocity, projectileInfo);
 
+                this.world.spawn(projectile);
+            }
         }
 
         damage(amount) {

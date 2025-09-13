@@ -38,8 +38,12 @@ export const GameObject = (function () {
             return visible;
         }
 
-        getElapsedTime() {
+        getElapsedTimeMs() {
             return this.elapsedTime;
+        }
+
+        getElapsedTimeSec () {
+            return this.elapsedTime / 1000;
         }
 
         setPosition(position, centerOn = false) {
@@ -78,7 +82,7 @@ export const GameObject = (function () {
                 return;
             }
 
-            this.world.despawn(this);
+            this.isSpawned = false;
         }
 
         update(deltaTime) {
