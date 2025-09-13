@@ -2,13 +2,14 @@ using SpacetimeDB;
 
 public static partial class Module
 {
-    [SpacetimeDB.Table]
-    public partial struct Player
+    [Table(Name = "player", Public = true)]
+    // [SpacetimeDB.Table]
+    public partial class Player
     {
         [SpacetimeDB.AutoInc]
         [SpacetimeDB.PrimaryKey]
         public int Id;
-        public string Name;
+        public string Name = "";
         public int Health;
         public int Speed;
         public int Attack;
@@ -41,8 +42,9 @@ public static partial class Module
             return;
         }
 
-        player.X = Math.Clamp(newX, -world.HalfWidth, world.HalfWidth);
-        player.Y = Math.Clamp(newY, -world.HalfHeight, world.HalfHeight);
+        player.X = Math.Clamp(newX, -world.Width / 2, world.Width / 2);
+        player.Y = Math.Clamp(newY, -world.Height / 2, world.Height / 2);
+
 
         ctx.Db.player.Id.Update(player);
         Log.Info($"{player.Name} moved to ({player.X}, {player.Y})");
