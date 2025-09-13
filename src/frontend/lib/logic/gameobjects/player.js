@@ -28,17 +28,20 @@ export const Player = (function () {
             this.rateOfFire = 1 / 3;
             this.currentWeapon = new ProjectileInfo({
                 amount: 3,
-                speed: 10,
-                size: new Vector2(10, 10)
+                speed: 9,
+                size: new Vector2(20, 20),
+                lifetime: 0.75
             });
 
             if (this.isLocalPlayer) {
                 this.bindControls();
             }
+
+            this.renderPriority = 10;
         }
 
         canFireProjectile () {
-            return Date.now() - this.lastAttack >= this.rateOfFire;
+            return ((Date.now() - this.lastAttack) / 1000) >= this.rateOfFire;
         }
 
         bindControls() {
@@ -174,8 +177,8 @@ export const Player = (function () {
             this.attackAngle = Math.atan2(attackDirection.y, attackDirection.x);
 
             if (this.canFireProjectile() && this.currentWeapon !== null) {
-                console.log("attacj!")
                 this.emitProjectiles(this.attackAngle, this.currentWeapon);
+                this.lastAttack = Date.now();
             }
         }
 

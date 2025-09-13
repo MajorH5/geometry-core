@@ -8,8 +8,18 @@ export const Body = (function () {
             this.size = config.size || new Vector2(0, 0);
             this.velocity = config.velocity || new Vector2(0, 0);
             this.solid = config.solid || false;
+            this.tags = {};
 
             this.collision = new Event();
+            this.boundaryCollision = new Event();
+        }
+
+        getTag(tag) {
+            return this.tags[tag]
+        }
+
+        setTag(tag, value) {
+            this.tags[tag] = value;
         }
 
         render(context, offset, scale) {

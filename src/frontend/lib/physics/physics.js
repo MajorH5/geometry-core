@@ -36,14 +36,18 @@ export const Physics = (function () {
 
                 if (body.position.x < 0) {
                     body.position.x = 0;
+                    body.boundaryCollision.trigger();
                 } else if (body.position.x + body.size.x > this.worldSize.x) {
                     body.position.x = this.worldSize.x - body.size.x;
+                    body.boundaryCollision.trigger();
                 }
-
+                
                 if (body.position.y < 0) {
                     body.position.y = 0;
+                    body.boundaryCollision.trigger();
                 } else if (body.position.y + body.size.y > this.worldSize.y) {
                     body.position.y = this.worldSize.y - body.size.y;
+                    body.boundaryCollision.trigger();
                 }
 
                 for (let j = 0; j < this.bodies.length; j++) {

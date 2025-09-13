@@ -5,6 +5,7 @@ export const GameObject = (function () {
     return class GameObject {
         constructor(bodyConfig) {
             this.body = new Body(bodyConfig);
+            this.body.setTag('gameobject', this);
 
             this.isSpawned = false;
             this.world = null;

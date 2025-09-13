@@ -19,7 +19,7 @@ export const Entity = (function () {
 
             for (let i = 0; i < projectileInfo.amount; i++) {
                 const velocity = new Vector2(Math.cos(angle), Math.sin(angle)).scale(projectileInfo.speed);
-                const projectile = new Projectile(this.getCenter(), velocity, projectileInfo);
+                const projectile = new Projectile(this, this.getCenter(), velocity, projectileInfo);
 
                 this.world.spawn(projectile);
             }
