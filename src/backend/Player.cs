@@ -197,4 +197,34 @@ public static partial class Module
         ctx.Db.Player.Id.Update(player);
         Log.Info($"{player.Name}'s BulletCount updated to {player.BulletCount}");
     }
+
+    // ---------------- Player Projectiles ----------------
+    [Reducer]
+    public static void PlayerShoot(ReducerContext ctx, int playerId, float angleDeg, float speed)
+    {
+        var player = ctx.Db.Player.Id.Find(playerId);
+        if (player is null || player.IsDead) return;
+
+        // Convert angle to radians
+        float angleRad = angleDeg * (MathF.PI / 180f);
+
+        // Calculate velocity
+        float velocityX = MathF.Cos(angleRad) * speed;
+        float velocityY = MathF.Sin(angleRad) * speed;
+
+        // Insert projectile
+        ctx.Db.Projectile.Insert(new Module.Projectile
+        {
+            X = player.X,
+            Y = player.Y,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            Damage = player.Attack,
+            Angle = angleDeg,
+            FromEnemy = false
+        });
+
+        Log.Info($"Player (#{player.Id}) fired a projectile at angle {angleDeg}° with speed {speed}");
+    }
+
 }

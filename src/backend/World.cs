@@ -57,12 +57,6 @@ public static partial class Module
         world.Tick++;
         ctx.Db.World.Id.Update(world);
 
-        foreach (var enemy in ctx.Db.Enemy.Iter())
-        {
-            if (!enemy.IsDead)
-                MoveEnemyTowardCore(ctx, enemy.Id);
-        }
-
         if (world.Tick % (int)(1f / world.SpawnRate) == 0)
         {
             for (int i = 0; i < world.CurrentWave; i++)
@@ -150,6 +144,35 @@ public static partial class Module
                 }
             }
 
+            // Player projectiles hitting enemies
+            if (!projectile.FromEnemy)
+            {
+                foreach (var enemy in ctx.Db.Enemy.Iter())
+                {
+                    if (enemy.IsDead) continue;
+
+                    float dx = enemy.X - projectile.X;
+                    float dy = enemy.Y - projectile.Y;
+
+                    if (MathF.Sqrt(dx * dx + dy * dy) < 1.0f) // collision radius
+                    {
+                        enemy.Health -= projectile.Damage;
+                        if (enemy.Health <= 0)
+                        {
+                            enemy.Health = 0;
+                            enemy.IsDead = true;
+                            Log.Info($"Enemy (#{enemy.Id}) was killed by a player projectile!");
+                        }
+                        ctx.Db.Enemy.Id.Update(enemy);
+
+                        // Remove projectile after hitting
+                        ctx.Db.Projectile.Id.Delete(projectile.Id);
+                        break; // stop checking other enemies
+                    }
+                }
+            }
+
+
             // Remove projectile if out of bounds
             if (MathF.Abs(projectile.X) > world.Width / 2 || MathF.Abs(projectile.Y) > world.Height / 2)
             {
@@ -224,7 +247,6 @@ public static partial class Module
         Log.Info($"Block {block.Id} at ({block.X}, {block.Y}) took {damage}, HP={block.Health}");
     }
 
-    // --- Enemy Movement Toward Core (0,0) ---
     [Reducer]
     public static void MoveEnemyTowardCore(ReducerContext ctx, int enemyId)
     {
@@ -237,10 +259,10 @@ public static partial class Module
         float dx = targetX - enemy.X;
         float dy = targetY - enemy.Y;
         float dist = MathF.Sqrt(dx * dx + dy * dy);
-
         if (dist < 0.1f)
         {
-            Log.Info($"{enemy.Id} reached the core!");
+            Log.Info($"Enemy (#{enemy.Id}) reached the core!");
+            // Optionally, apply damage to core here
             return;
         }
 
@@ -251,26 +273,52 @@ public static partial class Module
         float nextX = enemy.X + stepX;
         float nextY = enemy.Y + stepY;
 
-        // Check for a block at next position
+        // --- Check collisions ---
+
+        // Blocks
         foreach (var block in ctx.Db.Block.Iter())
         {
             if (!block.IsDestroyed &&
                 MathF.Abs(block.X - nextX) < 1 &&
                 MathF.Abs(block.Y - nextY) < 1)
             {
-                // Attack block instead of moving
                 DamageBlock(ctx, block.Id, enemy.Attack);
-                Log.Info($"{enemy.Id} attacked block {block.Id} at ({block.X},{block.Y})");
+                Log.Info($"Enemy (#{enemy.Id}) attacked block {block.Id} at ({block.X},{block.Y})");
                 return;
             }
         }
 
-        // Move enemy forward
+        // Players
+        foreach (var player in ctx.Db.Player.Iter())
+        {
+            if (player.IsDead) continue;
+            if (MathF.Sqrt((player.X - nextX) * (player.X - nextX) + (player.Y - nextY) * (player.Y - nextY)) < 1f)
+            {
+                player.Health -= enemy.Attack;
+                if (player.Health <= 0)
+                {
+                    player.Health = 0;
+                    player.IsDead = true;
+                    Log.Info($"Player (#{player.Id}) killed by enemy!");
+                }
+                ctx.Db.Player.Id.Update(player);
+                return;
+            }
+        }
+
+        // Core
+        if (MathF.Sqrt(nextX * nextX + nextY * nextY) < 1f)
+        {
+            Log.Info($"Enemy (#{enemy.Id}) damaged the core!");
+            return;
+        }
+
+        // Move enemy if no collision
         enemy.X = nextX;
         enemy.Y = nextY;
         ctx.Db.Enemy.Id.Update(enemy);
 
-        // Broadcast position for frontend (via websocket subscription)
-        Log.Info($"{enemy.Id} moved to ({enemy.X}, {enemy.Y})");
+        Log.Info($"Enemy (#{enemy.Id}) moved to ({enemy.X}, {enemy.Y})");
     }
+
 }
