@@ -71,6 +71,96 @@ public static partial class Module
             }
         }
 
+        // --- Move and shoot enemies ---
+        foreach (var enemy in ctx.Db.Enemy.Iter())
+        {
+            if (enemy.IsDead) continue;
+
+            MoveEnemyTowardCore(ctx, enemy.Id);
+
+            // Initialize NextShootTick if first time
+            if (enemy.NextShootTick == 0)
+            {
+                enemy.NextShootTick = world.Tick + rand.Next(10, 30); // small delay after spawn
+                ctx.Db.Enemy.Id.Update(enemy);
+                continue;
+            }
+
+            // Check if it's time to shoot
+            if (world.Tick >= enemy.NextShootTick)
+            {
+                bool spreadShot = rand.NextDouble() < 0.5;
+
+                if (spreadShot)
+                {
+                    EnemySpreadShot(ctx, enemy.Id, 0.5f + 0.01f * world.Tick); // speed scales with tick
+                }
+                else
+                {
+                    EnemyShootAtClosestPlayer(ctx, enemy.Id, 0.5f + 0.01f * world.Tick);
+                }
+
+                // Random delay until next shot
+                enemy.NextShootTick = world.Tick + rand.Next(10, 40);
+                ctx.Db.Enemy.Id.Update(enemy);
+            }
+        }
+
+        // --- Spawn new enemies based on wave ---
+        if (world.Tick % (int)(1f / world.SpawnRate) == 0)
+        {
+            for (int i = 0; i < world.CurrentWave; i++)
+            {
+                SpawnEnemy(ctx, 100 + world.Tick, 5 + world.Tick, 5 + world.Tick, 1);
+            }
+        }
+
+        // --- Update projectiles ---
+        foreach (var projectile in ctx.Db.Projectile.Iter())
+        {
+            // Move projectile
+            projectile.X += projectile.VelocityX;
+            projectile.Y += projectile.VelocityY;
+
+            // Enemy projectiles hitting players
+            if (projectile.FromEnemy)
+            {
+                foreach (var player in ctx.Db.Player.Iter())
+                {
+                    if (player.IsDead) continue;
+
+                    float dx = player.X - projectile.X;
+                    float dy = player.Y - projectile.Y;
+
+                    if (MathF.Sqrt(dx * dx + dy * dy) < 1.0f)
+                    {
+                        player.Health -= projectile.Damage;
+                        if (player.Health <= 0)
+                        {
+                            player.Health = 0;
+                            player.IsDead = true;
+                            Log.Info($"Player (#{player.Id}) was killed by a projectile!");
+                        }
+                        ctx.Db.Player.Id.Update(player);
+
+                        // Remove projectile after hitting
+                        ctx.Db.Projectile.Id.Delete(projectile.Id);
+                        break;
+                    }
+                }
+            }
+
+            // Remove projectile if out of bounds
+            if (MathF.Abs(projectile.X) > world.Width / 2 || MathF.Abs(projectile.Y) > world.Height / 2)
+            {
+                ctx.Db.Projectile.Id.Delete(projectile.Id);
+                continue;
+            }
+
+            // Update projectile in DB
+            ctx.Db.Projectile.Id.Update(projectile);
+        }
+
         Log.Info($"World tick updated: {world.Tick}");
     }
 

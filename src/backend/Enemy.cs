@@ -17,12 +17,13 @@ public static partial class Module
         public int Attack;
         public int AttackSpeed;
         public bool IsDead;
+        public int NextShootTick;
+
 
         // Position on grid
         public float X;
         public float Y;
     }
-
     // ---------------- Reducers ----------------
 
     [Reducer]
@@ -109,4 +110,113 @@ public static partial class Module
         ctx.Db.Enemy.Id.Update(enemy);
         Log.Info($"Enemy's Health updated to {enemy.Health}");
     }
+
+
+    ////////////////////////////////////////////////////////////////////
+    /// 
+    ///  PROJECTILES
+    /// 
+    /// /////////////////////////////////////////////////////////////////////
+
+    // ---------------- Projectile Table ----------------
+    [Table(Name = "Projectile", Public = true)]
+    public partial class Projectile
+    {
+        [AutoInc]
+        [PrimaryKey]
+        public int Id;
+
+        public float X;
+        public float Y;
+        public float VelocityX;
+        public float VelocityY;
+        public int Damage;
+        public bool FromEnemy;
+        public float Angle;
+    }
+
+    [Reducer]
+    public static void EnemyShootAtClosestPlayer(ReducerContext ctx, int enemyId, float speed)
+    {
+        var enemy = ctx.Db.Enemy.Id.Find(enemyId);
+        if (enemy is null || enemy.IsDead) return;
+
+        // Find closest online player
+        Player closestPlayer = null;
+        float closestDistance = float.MaxValue;
+
+        float dx = 0;
+        float dy = 0;
+
+        foreach (var player in ctx.Db.Player.Iter())
+        {
+            if (player.IsDead || !player.IsOnline) continue;
+
+            dx = player.X - enemy.X;
+            dy = player.Y - enemy.Y;
+            float distance = MathF.Sqrt(dx * dx + dy * dy);
+
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestPlayer = player;
+            }
+        }
+
+        if (closestPlayer == null) return; // no valid targets
+
+        // Calculate velocity towards closest player
+        float dxTarget = closestPlayer.X - enemy.X;
+        float dyTarget = closestPlayer.Y - enemy.Y;
+        float dist = MathF.Sqrt(dxTarget * dxTarget + dyTarget * dyTarget);
+        if (dist == 0) dist = 0.001f; // avoid division by zero
+
+        float velocityX = (dxTarget / dist) * speed;
+        float velocityY = (dyTarget / dist) * speed;
+
+        float angleDeg = MathF.Atan2(dy, dx) * (180 / MathF.PI); // 0° is to the right
+
+        // Insert projectile
+        ctx.Db.Projectile.Insert(new Projectile
+        {
+            X = enemy.X,
+            Y = enemy.Y,
+            VelocityX = velocityX,
+            VelocityY = velocityY,
+            Damage = enemy.Attack,
+            Angle = angleDeg,
+            FromEnemy = true
+        });
+
+        // Log angle for websocket clients
+        Log.Info($"Enemy (#{enemy.Id}) fired at closest player (#{closestPlayer.Id}) with angle {MathF.Atan2(dyTarget, dxTarget)} rad");
+    }
+
+
+    [Reducer]
+    public static void EnemySpreadShot(ReducerContext ctx, int enemyId, int count, float speed)
+    {
+        var enemy = ctx.Db.Enemy.Id.Find(enemyId);
+        if (enemy is null || enemy.IsDead) return;
+
+        for (int i = 0; i < count; i++)
+        {
+            float angle = i * (2 * MathF.PI / count);
+            float velocityX = MathF.Cos(angle) * speed;
+            float velocityY = MathF.Sin(angle) * speed;
+
+            ctx.Db.Projectile.Insert(new Projectile
+            {
+                X = enemy.X,
+                Y = enemy.Y,
+                VelocityX = velocityX,
+                VelocityY = velocityY,
+                Damage = enemy.Attack,
+                FromEnemy = true
+            });
+        }
+
+        Log.Info($"Enemy (#{enemy.Id}) fired a spreading shot with {count} projectiles");
+    }
+
 }
