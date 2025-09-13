@@ -4,6 +4,7 @@ import { Constants } from "./utils/constants.js";
 import { Player } from "./logic/gameobjects/player.js";
 import { World } from "./logic/world.js";
 import { Vector2 } from "./utils/vector2.js";
+import { TheCore } from "./logic/gameobjects/the-core.js";
 
 export const GeometryCore = (function () {
     return class GeometryCore {
@@ -19,8 +20,13 @@ export const GeometryCore = (function () {
             this.lastFrameTime = null;
             
             this.world = null;
-
-            this.world = new World(new Vector2(500, 5000), this.replicator);
+            
+            this.world = new World(new Vector2(500, 500), this.replicator);
+            
+            const core = new TheCore();
+            this.world.spawn(core);
+            core.setPosition(this.world.worldSize.div(2), true);
+            
             this.world.spawn(this.localPlayer);
         }
 
