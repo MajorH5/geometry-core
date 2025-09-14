@@ -266,6 +266,14 @@ public static partial class Module
                         Log.Info($"Player {player.Id} speed increased to {player.Speed}");
                         break;
                 }
+
+                player.Health = player.MaxHealth;
+
+                if (rand.Next(0, 2) == 0)
+                {
+                    player.ProjectileInfo.Amount += 1;
+                    Log.Info($"Player {player.Id} healed to full health on level up!");
+                }
             }
 
             player.MaxExperience = 100 + (player.Level - 1) * 50;
