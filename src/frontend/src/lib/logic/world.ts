@@ -8,6 +8,7 @@ import type { GameObject } from "./gameobjects/gameobject.ts";
 import type { Vector2 } from "../utils/vector2.ts";
 import { Player } from "./gameobjects/player.ts";
 import { Entity } from "./gameobjects/entity.ts";
+import type { GameHUD } from "../ui/game-hud.ts";
 
 type InstanceVector2 = InstanceType<typeof Vector2>;
 type InstanceReplicator = InstanceType<typeof Replicator>;
@@ -27,8 +28,9 @@ export const World = (function () {
         playerLookup: Map<number, InstanceGameObject>;
         entityLookup: Map<number, InstanceGameObject>;
         canvas: HTMLCanvasElement;
+        hud: GameHUD;
 
-        constructor(worldSize: InstanceVector2, replicator: InstanceReplicator, canvas: HTMLCanvasElement) {
+        constructor(worldSize: InstanceVector2, replicator: InstanceReplicator, canvas: HTMLCanvasElement, hud: GameHUD) {
             this.canvas = canvas;
             this.worldSize = worldSize;
             this.gameObjects = [];
@@ -38,6 +40,7 @@ export const World = (function () {
             this.playerLookup = new Map();
             this.entityLookup = new Map();
             this.replicator = replicator;
+            this.hud = hud;
 
             this.visualEffects = [
                 // new Grid(worldSize.x, worldSize.y),
@@ -56,7 +59,7 @@ export const World = (function () {
 
             this.gameObjects.push(gameObject);
             this.physics.add(gameObject.body);
-            this.gameObjects.sort((a, z) => a.renderPriority - z.renderPriority);
+            this.gameObjects.sort((a: InstanceGameObject, z: InstanceGameObject) => a.renderPriority - z.renderPriority);
 
             if (gameObject instanceof Player) {
                 this.playerLookup.set(objectId, gameObject);

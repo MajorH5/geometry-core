@@ -21,7 +21,7 @@ public static partial class Module
         public int Damage; // dmg each shot does
         public int Spread; // spread between each shot
         public string Color; // color of each shot
-        public int RateOfFire; // amount of shots taken per second
+        public float RateOfFire; // amount of shots taken per second
         public int Lifetime; // how long each shot lasts
     }
 
@@ -118,14 +118,14 @@ public static partial class Module
             Size = 40,
             ProjectileInfo = new ProjectileInfo
             {
-                Amount = 1,
-                Speed = 20,
-                Size = 20,
-                Damage = 100,
-                Spread = 1,
-                Color = "#000000ff",
-                RateOfFire = 1,
-                Lifetime = 10
+                Amount = 10,
+                Speed = 4,
+                Size = 50,
+                Damage = 10,
+                Spread = 3,
+                Color = "#bb1d01ff",
+                RateOfFire = 0.1f,
+                Lifetime = 3
             }
         });
 

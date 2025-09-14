@@ -5,5 +5,6 @@ export const Constants = (function () {
         SERVER_WS_URL: 'ws://localhost:3000',
         GLOBAL_DB_NAME: 'geometry-core',
         DEBUG_MODE: false,
+        ORIGIN: 'http://localhost:5173'
     } as const;
 })();

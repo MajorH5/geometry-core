@@ -295,6 +295,8 @@ public static partial class Module
             }
             else
             {
+                // For non-shooter enemies, use original logic (or don't attack)
+                Attack(ctx, enemy.Id, true, 0); // Comment this out if only shooters should attack
             }
 
             // Move enemy toward core

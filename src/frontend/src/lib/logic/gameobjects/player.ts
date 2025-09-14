@@ -54,6 +54,17 @@ export const Player = (function () {
             }
         }
 
+        setHealth (health: number): void {
+            super.setHealth(health);
+
+            if (this.world !== null && this.isLocalPlayer) {
+                this.world.hud.updatePlayerStats({
+                    health: this.health,
+                    maxHealth: this.maxHealth,
+                });
+            }
+        }
+
         bindControls(): void {
             document.addEventListener('keydown', (event) => {
                 if (this.controlsLocked || !this.isSpawned) {
@@ -200,6 +211,16 @@ export const Player = (function () {
                     attackAngleDeg = ((attackAngleDeg % 360) + 360) % 360;
                     replicator.updateAttack(this.objectId, this.isFiring, Math.floor(attackAngleDeg));
                 }
+            }
+
+            if (this.world !== null) {
+                this.world.hud.updateMinimap(
+                    this.body.position,
+                    new Vector2(0, 0),
+                    Array.from(this.world.entityLookup.values()).map(e => {
+                        return e.body.position;
+                    })
+                )
             }
         }
 

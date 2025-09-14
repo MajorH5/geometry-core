@@ -2,6 +2,7 @@ import './style.css'
 import { GeometryCore } from "./lib/geometry-core.ts";
 import { SplashScreen } from "./lib/ui/splash-screen.ts";
 import { TitleScreen } from "./lib/ui/title-screen.ts";
+import { GameHUD } from './lib/ui/game-hud.ts';
 
 (function () {
   // Setup initial HTML structure
@@ -39,6 +40,9 @@ import { TitleScreen } from "./lib/ui/title-screen.ts";
             <!-- Title Screen Container -->
             <div id="title-container"></div>
             
+            <!-- Game HUD Container -->
+            <div id="game-hud"></div>
+            
             <!-- Game Canvas -->
             <canvas id="canvas" style="display: none;"></canvas>
         </div>
@@ -47,6 +51,7 @@ import { TitleScreen } from "./lib/ui/title-screen.ts";
   const canvas = document.getElementById("canvas") as HTMLCanvasElement;
   const splashContainer = document.getElementsByClassName("splash-screen")[0] as HTMLDivElement;
   const titleContainer = document.getElementById("title-container") as HTMLDivElement;
+  const gameHUDContainer = document.getElementById("game-hud") as HTMLDivElement;
 
   // Initialize splash screen
   const splashScreen = new SplashScreen(splashContainer);
@@ -75,6 +80,9 @@ import { TitleScreen } from "./lib/ui/title-screen.ts";
     }
   });
 
+  const hud = new GameHUD(gameHUDContainer);
+  hud.hide();
+
   // titleScreen.setLogos([
   //     "/assets/logo1.png",
   //     "/assets/logo2.png", 
@@ -86,9 +94,10 @@ import { TitleScreen } from "./lib/ui/title-screen.ts";
       canvas.style.display = 'block';
 
       // Initialize and start the game
-      const geometryCore = new GeometryCore(canvas);
+      const geometryCore = new GeometryCore(canvas, hud);
       geometryCore.initialize();
       geometryCore.start();
+      hud.show();
     });
   }
 

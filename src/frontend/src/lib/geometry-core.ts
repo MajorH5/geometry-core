@@ -12,6 +12,7 @@ import { Entity } from "./logic/gameobjects/entity";
 import { Shooter } from "./logic/gameobjects/enemies/shooter";
 import { Blaster } from "./logic/gameobjects/enemies/blaster";
 import { Tank } from "./logic/gameobjects/enemies/tank";
+import type { GameHUD } from "./ui/game-hud";
 
 export const GeometryCore = (function () {
     return class GeometryCore {
@@ -24,8 +25,9 @@ export const GeometryCore = (function () {
         private lastFrameTime: number | null;
         private world: InstanceType<typeof World> | null;
         private resizeHandler: () => void;
+        private hud: GameHUD;
 
-        constructor(canvas: HTMLCanvasElement) {
+        constructor(canvas: HTMLCanvasElement, hud: GameHUD) {
             this.canvas = canvas;
             const context = canvas.getContext("2d");
             if (!context) {
@@ -36,13 +38,14 @@ export const GeometryCore = (function () {
             this.localPlayer = new Player(true, canvas);
 
             this.replicator = new Replicator(Constants.SERVER_WS_URL, Constants.GLOBAL_DB_NAME);
+            this.hud = hud;
             this.initialized = false;
             this.isRunning = false;
             this.lastFrameTime = null;
 
             this.world = null;
 
-            this.world = new World(new Vector2(1500, 1500), this.replicator, this.canvas);
+            this.world = new World(new Vector2(4500, 4500), this.replicator, this.canvas, this.hud);
 
             const core = new TheCore();
             this.world.spawn(core);
@@ -103,7 +106,7 @@ export const GeometryCore = (function () {
                     const isLocalPlayer = networkedPlayer.identity.data === this.replicator.getIdentity()?.data;
 
                     if (isLocalPlayer) {
-                        this.localPlayer.loadState(networkedPlayer, isLocalPlayer)
+                        this.localPlayer.loadState(networkedPlayer, false); // <--- we lie here to force initial position sets
                         this.world.spawn(this.localPlayer, networkedPlayer.id);
                         this.world.camera.setSubject(this.localPlayer);
                         return;

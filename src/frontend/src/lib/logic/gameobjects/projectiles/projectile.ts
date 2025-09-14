@@ -2,6 +2,7 @@ import { GameObject } from "../gameobject";
 import { Vector2 } from "../../../utils/vector2";
 import { Entity } from "../entity";
 import { ProjectileInfo } from "./projectileInfo";
+import { Sound } from "../../../sounds/Sounds.ts";
 
 type Vector2Type = InstanceType<typeof Vector2>;
 
@@ -45,9 +46,20 @@ export const Projectile = (function () {
                         if (this.source.hostile && !gameObject.hostile && gameObject.isLocalPlayer) {
                             // local player hit, report this
                             replicator.damagePlayer(this.source.objectId);
+
+                            const hitSfx = new Sound('/assets/audio/player_hit_sfx.wav', 1);
+                            hitSfx.play();
                         } else if (this.source.isLocalPlayer && gameObject.hostile) {
                             // we hit a bad guy
                             replicator.damageEnemy(gameObject.objectId);
+
+                            const sounds = [
+                                new Sound('/assets/audio/hit_sfx_1.wav', 1),
+                                new Sound('/assets/audio/hit_sfx_2.wav', 1),
+                                new Sound('/assets/audio/hit_sfx_3.wav', 1),
+                            ];
+                            const sound = sounds[Math.floor(Math.random() * sounds.length)];
+                            sound.play();
                         }
                     }
 

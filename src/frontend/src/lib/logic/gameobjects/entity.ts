@@ -35,8 +35,8 @@ export const Entity = (function () {
         }
 
         loadState (networkEntity: any, isLocalPlayer: boolean | undefined) {
-            this.health = networkEntity.health;
             this.maxHealth = networkEntity.maxHealth;
+            this.setHealth(networkEntity.health);
 
             if (!isLocalPlayer) {
                 this.attackAngle = networkEntity.attackAngle * (Math.PI / 180);
@@ -82,10 +82,14 @@ export const Entity = (function () {
             }
         }
 
+        setHealth (health: number): void {
+            this.health = Math.max(0, Math.min(this.maxHealth, health));
+        }
+
         damage(amount: number): void {
             if (amount <= 0) return;
 
-            this.health = Math.max(0, this.health - amount);
+            this.setHealth(this.health - amount);
 
             if (this.health <= 0) {
                 this.despawn();
@@ -94,8 +98,8 @@ export const Entity = (function () {
 
         heal(amount: number): void {
             if (amount <= 0) return;
-
-            this.health = Math.min(this.maxHealth, this.health + amount);
+            
+            this.setHealth(this.health + amount);
         }
 
         isDead(): boolean {

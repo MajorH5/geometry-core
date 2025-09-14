@@ -7,10 +7,14 @@ const TANK_HEALTH = 100;
 
 export const Tank = (function () {
     return class Tank extends Entity {
+        offset: number;
+
         constructor() {
             super(TANK_HEALTH, true, {
                 size: new Vector2(100, 100)
             });
+
+            this.offset = Math.random() * 1000 * 4;
 
             this.name = 'Tank';
         }
@@ -19,7 +23,7 @@ export const Tank = (function () {
             const centerX = (this.body.position.x + this.body.size.x / 2 + offset.x) * scale;
             const centerY = (this.body.position.y + this.body.size.y / 2 + offset.y) * scale;
             const baseSize = Math.max(this.body.size.x, this.body.size.y) * scale;
-            const time = Date.now() * 0.001;
+            const time = (this.getElapsedTimeMs() + this.offset) * 0.001;
 
             context.save();
 
