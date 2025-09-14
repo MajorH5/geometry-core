@@ -177,6 +177,15 @@ export const GeometryCore = (function () {
                         this.world.despawn(entity);
                     }
                 });
+
+                this.replicator.onWorldUpdate((_, __, worldState) => {
+                    if (this.world === null) return;
+                    
+                    this.hud.updateGameStats({
+                        waveNumber: worldState.currentWave,
+                        gameTime: Math.floor(worldState.tick / 60),
+                    })
+                });
             });
         }
 

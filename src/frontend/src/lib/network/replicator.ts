@@ -1,4 +1,4 @@
-import { DbConnection, Enemy, Player } from '../module_bindings';
+import { DbConnection, Enemy, Player, World } from '../module_bindings';
 import { Identity } from '@clockworklabs/spacetimedb-sdk';
 import { Vector2 } from '../utils/vector2';
 
@@ -199,6 +199,13 @@ export class Replicator {
 
         this.conn.db.enemy.onUpdate(callback);
         return () => this.conn?.db.enemy.removeOnUpdate(callback);
+    }
+
+    public onWorldUpdate(callback: (ctx: any, oldWorld: World, newWorld: World) => void): () => void {
+        if (!this.conn) return () => { };
+
+        this.conn.db.world.onUpdate(callback);
+        return () => this.conn?.db.world.removeOnUpdate(callback);
     }
 
     public onEnemyDelete(callback: (ctx: any, enemy: Enemy) => void): () => void {
