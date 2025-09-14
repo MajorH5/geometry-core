@@ -105,7 +105,7 @@ public static partial class Module
 
         Random rand = new Random();
 
-        if (world.Tick % (60 * 15) == 5)
+        if (world.Tick % (60 * 10) == 5)
         {
             world.CurrentWave += 1;
 
