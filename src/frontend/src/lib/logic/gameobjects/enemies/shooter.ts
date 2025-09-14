@@ -9,7 +9,7 @@ export const Shooter = (function () {
     return class Shooter extends Entity {
         constructor() {
             super(SHOOTER_HEALTH, true, {
-                size: new Vector2(50, 50)
+                size: new Vector2(80, 80)
             });
 
             this.name = 'Shooter';

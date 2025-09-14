@@ -10,6 +10,8 @@ import { EnemyTypeIds } from "./logic/gameobjects/enemies/enemyTypeIds";
 import { Spiker } from "./logic/gameobjects/enemies/spiker";
 import { Entity } from "./logic/gameobjects/entity";
 import { Shooter } from "./logic/gameobjects/enemies/shooter";
+import { Blaster } from "./logic/gameobjects/enemies/blaster";
+import { Tank } from "./logic/gameobjects/enemies/tank";
 
 export const GeometryCore = (function () {
     return class GeometryCore {
@@ -40,7 +42,7 @@ export const GeometryCore = (function () {
 
             this.world = null;
 
-            this.world = new World(new Vector2(500, 500), this.replicator, this.canvas);
+            this.world = new World(new Vector2(1500, 1500), this.replicator, this.canvas);
 
             const core = new TheCore();
             this.world.spawn(core);
@@ -138,6 +140,12 @@ export const GeometryCore = (function () {
                             break;
                         case EnemyTypeIds.SHOOTER:
                             entity = new Shooter();
+                            break;
+                        case EnemyTypeIds.BLASTER:
+                            entity = new Blaster();
+                            break;
+                        case EnemyTypeIds.TANK:
+                            entity = new Tank();
                             break;
                     }
 

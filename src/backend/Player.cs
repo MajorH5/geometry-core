@@ -93,10 +93,13 @@ public static partial class Module
         Log.Info($"Connect {ctx.Sender}");
 
         var player = ctx.Db.Player.Identity.Find(ctx.Sender);
+        var world = ctx.Db.World.Id.Find(1);
 
         if (player is not null)
         {
             player.IsOnline = true;
+            player.X = world.Width / 2;
+            player.Y = world.Height / 2 + 100;
             ctx.Db.Player.Identity.Update(player);
             Log.Info($"{player.Name} reconnected.");
         }
@@ -104,7 +107,7 @@ public static partial class Module
         {
             ctx.Db.Player.Insert(new Player
             {
-                Name = "PlayerGuy",
+                Name = "Player",
                 Identity = ctx.Sender,
                 ObjectId = GenerateRandomInt(),
                 Health = 1000000,
@@ -114,8 +117,8 @@ public static partial class Module
                 AttackAngle = 0,
                 IsDead = false,
                 IsOnline = true,
-                X = 0,
-                Y = 0,
+                X = world.Width / 2,
+                Y = world.Height / 2 + 100,
                 ProjectileInfo = new ProjectileInfo
                 {
                     Amount = 2,
@@ -125,6 +128,7 @@ public static partial class Module
                     Spread = 10,
                     Color = "#00B2E1",
                     RateOfFire = 4,
+                    Lifetime = 1,
                 }
             });
             Log.Info($"New player created for {ctx.Sender}");

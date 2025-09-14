@@ -66,17 +66,17 @@ export const Grid = (function () {
             context.strokeStyle = '#000';
             context.lineWidth = 2 * scale;
 
-            const centerX = width / 2 + offset.x * scale;
-            const centerY = height / 2 + offset.y * scale;
+            // const centerX = width / 2 + offset.x * scale;
+            // const centerY = height / 2 + offset.y * scale;
 
-            context.beginPath();
-            context.moveTo(0, centerY);
-            context.lineTo(width, centerY);
-            context.stroke();
-            context.beginPath();
-            context.moveTo(centerX, 0);
-            context.lineTo(centerX, height);
-            context.stroke();
+            // context.beginPath();
+            // context.moveTo(0, centerY);
+            // context.lineTo(width, centerY);
+            // context.stroke();
+            // context.beginPath();
+            // context.moveTo(centerX, 0);
+            // context.lineTo(centerX, height);
+            // context.stroke();
 
             context.restore();
         }

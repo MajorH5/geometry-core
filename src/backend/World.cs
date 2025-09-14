@@ -36,8 +36,8 @@ public static partial class Module
         var world = new World
         {
             Id = 1,
-            Width = 500,
-            Height = 500,
+            Width = 1500,
+            Height = 1500,
             IsActive = true,
             Tick = 0,
             CurrentWave = 1,
@@ -107,7 +107,8 @@ public static partial class Module
         {
             SpawnEnemy(ctx, EnemyTypeIds.SPIKER, 0, 0);
             SpawnEnemy(ctx, EnemyTypeIds.SHOOTER, world.Width - 100, world.Height - 100);
-            // SpawnEnemy(ctx, EnemyTypeIds.BLASTER, world.Width / 2, world.Height / 2);
+            SpawnEnemy(ctx, EnemyTypeIds.BLASTER, world.Width - 100, 0);
+            SpawnEnemy(ctx, EnemyTypeIds.TANK, 0, world.Height - 100);
         }
 
         // Random rand = new Random();

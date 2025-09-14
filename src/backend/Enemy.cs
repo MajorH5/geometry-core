@@ -9,6 +9,7 @@ public static partial class Module
         public const int SPIKER = 1;
         public const int SHOOTER = 2;
         public const int BLASTER = 3;
+        public const int TANK = 4;
     }
 
     [SpacetimeDB.Type]
@@ -21,6 +22,7 @@ public static partial class Module
         public int Spread; // spread between each shot
         public string Color; // color of each shot
         public int RateOfFire; // amount of shots taken per second
+        public int Lifetime; // how long each shot lasts
     }
 
     [Table(Name = "EnemyType", Public = true)]
@@ -55,7 +57,7 @@ public static partial class Module
         {
             TypeId = EnemyTypeIds.SPIKER,
             MaxHealth = 100,
-            Speed = 1,
+            Speed = 5,
             Size = 80,
             ProjectileInfo = new ProjectileInfo
             {
@@ -66,6 +68,7 @@ public static partial class Module
                 Spread = 0,
                 Color = "#ff0000",
                 RateOfFire = 3,
+                Lifetime = 1,
             }
         });
 
@@ -77,13 +80,14 @@ public static partial class Module
             Size = 40,
             ProjectileInfo = new ProjectileInfo
             {
-                Amount = 1,
-                Speed = 10,
+                Amount = 4,
+                Speed = 8,
                 Size = 25,
                 Damage = 20,
-                Spread = 0,
-                Color = "#412121ff",
-                RateOfFire = 3,
+                Spread = 360 / 4,
+                Color = "#ff0000",
+                RateOfFire = 5,
+                Lifetime = 2,
             }
         });
 
@@ -102,6 +106,26 @@ public static partial class Module
                 Spread = 10,
                 Color = "#18046fff",
                 RateOfFire = 1,
+                Lifetime = 1
+            }
+        });
+
+        ctx.Db.EnemyType.Insert(new EnemyType
+        {
+            TypeId = EnemyTypeIds.TANK,
+            MaxHealth = 500,
+            Speed = 1,
+            Size = 40,
+            ProjectileInfo = new ProjectileInfo
+            {
+                Amount = 10,
+                Speed = 4,
+                Size = 20,
+                Damage = 10,
+                Spread = 10,
+                Color = "#18046fff",
+                RateOfFire = 1,
+                Lifetime = 1
             }
         });
 
