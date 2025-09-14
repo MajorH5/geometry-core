@@ -19,6 +19,19 @@ export const TheCore = (function () {
             this.healtbarOffset = -10;
         }
 
+        setHealth(health: number): void {
+            super.setHealth(health);
+
+             if (this.world !== null) {
+                this.world.hud.updateCoreHealth((this.health / this.maxHealth) * 100);
+            }
+        }
+
+        onDespawn(): void {
+            this.world?.hud.updateCoreHealth(0);
+            super.onDespawn();
+        }
+
         render(context: any, offset: Vector2Type, scale: number): void {
             super.render(context, offset, scale);
 

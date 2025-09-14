@@ -2,7 +2,7 @@ export class GameHUD {
     private container: HTMLDivElement;
     private hudElement: HTMLDivElement;
     private isVisible: boolean = true;
-    
+
     // Player stats
     private playerName: string = 'Player';
     private health: number = 100;
@@ -10,7 +10,7 @@ export class GameHUD {
     private level: number = 1;
     private experience: number = 0;
     private maxExperience: number = 100;
-    
+
     // Upgrade system
     private upgrades: { [key: string]: number } = {
         damage: 0,
@@ -19,13 +19,13 @@ export class GameHUD {
         fireRate: 0,
         shield: 0
     };
-    
+
     // Game stats
     private playersOnline: number = 0;
     private waveNumber: number = 1;
     private score: number = 0;
     private gameTime: number = 0;
-    
+
     private animationFrame?: number;
 
     constructor(container: HTMLDivElement) {
@@ -38,7 +38,7 @@ export class GameHUD {
     private setupHTML(): void {
         this.hudElement = document.createElement('div');
         this.hudElement.className = 'game-hud';
-        
+
         this.hudElement.innerHTML = `
             <!-- Top HUD Bar -->
             <div class="hud-top-bar">
@@ -49,8 +49,8 @@ export class GameHUD {
                     </div>
                     
                     <div class="player-details">
-                        <div class="player-name" id="playerName">${this.playerName}</div>
-                        <div class="player-level">LVL ${this.level}</div>
+                        <div class="player-name" id="playerName"><b>${this.playerName}</b></div>
+                        <div class="player-level"><b>LVL ${this.level}</b></div>
                         
                         <div class="health-container">
                             <div class="stat-bar health-bar">
@@ -107,7 +107,7 @@ export class GameHUD {
             </div>
             
             <!-- Right Side Upgrades Panel -->
-            <div class="upgrades-panel" id="upgradesPanel">
+            <div class="upgrades-panel collapsed" id="upgradesPanel">
                 <div class="panel-header">
                     <div class="panel-title">UPGRADES</div>
                     <button class="panel-toggle" id="upgradesToggle">
@@ -195,7 +195,7 @@ export class GameHUD {
             
             <!-- Bottom Action Bar -->
             <div class="action-bar">
-                <div class="action-slots">
+                <div class="action-slots" style="display: none;">
                     <div class="action-slot" data-slot="1">
                         <div class="slot-key">1</div>
                         <div class="slot-icon primary-weapon"></div>
@@ -234,10 +234,24 @@ export class GameHUD {
                     <div class="minimap-player" id="minimapPlayer"></div>
                     <div class="minimap-core" id="minimapCore"></div>
                     <div class="minimap-enemies" id="minimapEnemies"></div>
+                    <div class="minimap-enemies" id="minimapPlayers"></div>
                 </div>
             </div>
+
+            <!-- Controls Help -->
+            <div class="controls-help" id="controlsHelp">
+                <h3>Controls</h3>
+                <ul>
+                    <li><b>WASD</b> - Move</li>
+                    <li><b>Mouse</b> - Aim</li>
+                    <li><b>Left Click</b> - Shoot</li>
+                    <li><b>H</b> - Toggle Controls</li>
+                    <li><b>Tab</b> - Toggle HUD</li>
+                </ul>
+            </div>
+
         `;
-        
+
         this.container.appendChild(this.hudElement);
     }
 
@@ -246,22 +260,22 @@ export class GameHUD {
         const upgradesToggle = this.hudElement.querySelector('#upgradesToggle') as HTMLButtonElement;
         const upgradesContent = this.hudElement.querySelector('#upgradesContent') as HTMLDivElement;
         const upgradesPanel = this.hudElement.querySelector('#upgradesPanel') as HTMLDivElement;
-        
+
         upgradesToggle?.addEventListener('click', () => {
             upgradesPanel.classList.toggle('collapsed');
         });
-        
+
         // Upgrade item hover effects
         const upgradeItems = this.hudElement.querySelectorAll('.upgrade-item');
         upgradeItems.forEach(item => {
             item.addEventListener('mouseenter', () => {
                 item.classList.add('hovered');
             });
-            
+
             item.addEventListener('mouseleave', () => {
                 item.classList.remove('hovered');
             });
-            
+
             item.addEventListener('click', () => {
                 const upgradeType = item.getAttribute('data-upgrade');
                 if (upgradeType && this.upgrades[upgradeType] < 5) {
@@ -269,7 +283,7 @@ export class GameHUD {
                 }
             });
         });
-        
+
         // Action slot clicks
         const actionSlots = this.hudElement.querySelectorAll('.action-slot');
         actionSlots.forEach((slot, index) => {
@@ -277,10 +291,10 @@ export class GameHUD {
                 this.selectActionSlot(index + 1);
             });
         });
-        
+
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            switch(e.key) {
+            switch (e.key) {
                 case '1':
                 case '2':
                 case '3':
@@ -297,6 +311,14 @@ export class GameHUD {
                     break;
             }
         });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'h' || e.key === 'H') {
+                const help = this.hudElement.querySelector('#controlsHelp') as HTMLElement;
+                if (help) help.style.display = (help.style.display === 'none' ? 'block' : 'none');
+            }
+        });
+
     }
 
     private startUpdateLoop(): void {
@@ -309,20 +331,20 @@ export class GameHUD {
 
     private updateAnimations(): void {
         const time = Date.now() * 0.001;
-        
+
         // Animate avatar ring
         const avatarRing = this.hudElement.querySelector('.avatar-ring') as HTMLElement;
         if (avatarRing) {
             avatarRing.style.transform = `rotate(${time * 30}deg)`;
         }
-        
+
         // Animate core icon
         const coreIcon = this.hudElement.querySelector('.core-icon') as HTMLElement;
         if (coreIcon) {
             const pulse = Math.sin(time * 2) * 0.1 + 1;
             coreIcon.style.transform = `scale(${pulse}) rotate(${time * 20}deg)`;
         }
-        
+
         // Animate upgrade icons
         const upgradeIcons = this.hudElement.querySelectorAll('.upgrade-icon');
         upgradeIcons.forEach((icon, index) => {
@@ -346,30 +368,30 @@ export class GameHUD {
             this.playerName = stats.name;
             this.updateElement('playerName', this.playerName);
         }
-        
+
         if (stats.health !== undefined) {
             this.health = Math.max(0, stats.health);
             this.updateElement('healthText', this.health.toString());
             this.updateHealthBar();
         }
-        
+
         if (stats.maxHealth !== undefined) {
             this.maxHealth = stats.maxHealth;
             this.updateElement('maxHealthText', this.maxHealth.toString());
             this.updateHealthBar();
         }
-        
+
         if (stats.level !== undefined) {
             this.level = stats.level;
-            this.updateElement('playerLevel', `LVL ${this.level}`);
+            this.updateElement('player-level', `LVL ${this.level}`);
         }
-        
+
         if (stats.experience !== undefined) {
             this.experience = stats.experience;
             this.updateElement('xpText', this.experience.toString());
             this.updateXPBar();
         }
-        
+
         if (stats.maxExperience !== undefined) {
             this.maxExperience = stats.maxExperience;
             this.updateElement('maxXpText', this.maxExperience.toString());
@@ -387,17 +409,17 @@ export class GameHUD {
             this.playersOnline = stats.playersOnline;
             this.updateElement('onlineCount', this.playersOnline.toString());
         }
-        
+
         if (stats.waveNumber !== undefined) {
             this.waveNumber = stats.waveNumber;
             this.updateElement('waveNumber', this.waveNumber.toString());
         }
-        
+
         if (stats.score !== undefined) {
             this.score = stats.score;
             this.updateElement('scoreNumber', this.score.toLocaleString());
         }
-        
+
         if (stats.gameTime !== undefined) {
             this.gameTime = stats.gameTime;
             const minutes = Math.floor(stats.gameTime / 60);
@@ -417,7 +439,7 @@ export class GameHUD {
     public updateCoreHealth(percentage: number): void {
         const coreFill = this.hudElement.querySelector('#coreFill') as HTMLElement;
         const coreText = coreFill?.parentElement?.querySelector('.bar-text') as HTMLElement;
-        
+
         if (coreFill) {
             coreFill.style.width = `${Math.max(0, Math.min(100, percentage))}%`;
         }
@@ -442,17 +464,18 @@ export class GameHUD {
         this.hudElement.style.opacity = this.isVisible ? '1' : '0.3';
     }
 
-    public updateMinimap(playerPos: { x: number, y: number }, corePos: { x: number, y: number }, enemies: Array<{ x: number, y: number }>): void {
+    public updateMinimap(playerPos: { x: number, y: number }, corePos: { x: number, y: number }, enemies: Array<{ x: number, y: number }>, players: Array<{ x: number, y: number }>): void {
         const minimapPlayer = this.hudElement.querySelector('#minimapPlayer') as HTMLElement;
         const minimapCore = this.hudElement.querySelector('#minimapCore') as HTMLElement;
         const minimapEnemies = this.hudElement.querySelector('#minimapEnemies') as HTMLElement;
-        
+        const minimapPlayers = this.hudElement.querySelector('#minimapPlayers') as HTMLElement;
+
         // Update player position (center the minimap on player)
         if (minimapPlayer) {
             minimapPlayer.style.left = '50%';
             minimapPlayer.style.top = '50%';
         }
-        
+
         // Update core position relative to player
         if (minimapCore) {
             const relativeX = ((corePos.x - playerPos.x) / 20) + 50; // Scale and center
@@ -460,7 +483,7 @@ export class GameHUD {
             minimapCore.style.left = `${Math.max(0, Math.min(100, relativeX))}%`;
             minimapCore.style.top = `${Math.max(0, Math.min(100, relativeY))}%`;
         }
-        
+
         // Update enemy positions
         if (minimapEnemies) {
             minimapEnemies.innerHTML = '';
@@ -474,6 +497,20 @@ export class GameHUD {
                 minimapEnemies.appendChild(enemyDot);
             });
         }
+
+        // Update player positions
+        if (minimapPlayers) {
+            minimapPlayers.innerHTML = '';
+            players.forEach(player => {
+                const playerDot = document.createElement('div');
+                playerDot.className = 'minimap-player-other';
+                const relativeX = ((player.x - playerPos.x) / 20) + 50;
+                const relativeY = ((player.y - playerPos.y) / 20) + 50;
+                playerDot.style.left = `${Math.max(0, Math.min(100, relativeX))}%`;
+                playerDot.style.top = `${Math.max(0, Math.min(100, relativeY))}%`;
+                minimapEnemies.appendChild(playerDot);
+            });
+        }
     }
 
     private updateHealthBar(): void {
@@ -481,7 +518,7 @@ export class GameHUD {
         if (healthFill) {
             const percentage = (this.health / this.maxHealth) * 100;
             healthFill.style.width = `${percentage}%`;
-            
+
             // Change color based on health percentage
             if (percentage > 60) {
                 healthFill.className = 'bar-fill health-fill high';
@@ -506,11 +543,11 @@ export class GameHUD {
         if (upgradeItem) {
             const levelElement = upgradeItem.querySelector('.upgrade-level') as HTMLElement;
             const dots = upgradeItem.querySelectorAll('.dot');
-            
+
             if (levelElement) {
                 levelElement.textContent = `Level ${this.upgrades[skillName]}`;
             }
-            
+
             dots.forEach((dot, index) => {
                 if (index < this.upgrades[skillName]) {
                     dot.classList.add('active');

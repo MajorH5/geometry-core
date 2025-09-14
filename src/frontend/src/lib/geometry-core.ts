@@ -47,10 +47,6 @@ export const GeometryCore = (function () {
 
             this.world = new World(new Vector2(4500, 4500), this.replicator, this.canvas, this.hud);
 
-            const core = new TheCore();
-            this.world.spawn(core);
-            core.setPosition(this.world.worldSize.div(2), true);
-
             // Bind the resize handler
             this.resizeHandler = this.handleResize.bind(this);
         }
@@ -150,11 +146,14 @@ export const GeometryCore = (function () {
                         case EnemyTypeIds.TANK:
                             entity = new Tank();
                             break;
+                        case EnemyTypeIds.CORE:
+                            entity = new TheCore();
+                            break;
                     }
 
                     if (entity !== null) {
-                        entity.loadState(networkedEnemy, false);
                         this.world.spawn(entity, networkedEnemy.id);
+                        entity.loadState(networkedEnemy, false);
                     } else {
                     }
                 });

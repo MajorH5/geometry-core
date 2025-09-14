@@ -47,9 +47,12 @@ export class TitleScreen {
                 <header class="header">
                     <div class="brand-section">
                         <div class="game-jam-logos">
-                            <div class="logo-placeholder">LOGO 1</div>
-                            <div class="logo-placeholder">LOGO 2</div>
-                            <div class="logo-placeholder">LOGO 3</div>
+                            <a href="https://hophacks.com/" target="_blank">
+                                <img src="/assets/images/hop_hacks_logo_836x836.png" style="max-width: 50px;"></img>
+                            </a>
+                            <a href="https://spacetimedb.com/" target="_blank">
+                                <img src="/assets/images/spacetime_db_logo_1024x1024.png" style="max-width: 50px;"></img>
+                            </a>
                         </div>
                     </div>
                     
@@ -67,16 +70,12 @@ export class TitleScreen {
                 <!-- Main content -->
                 <main class="main-content">
                     <div class="game-info">
-                        <h1 class="game-title">GEOMETRIC CORE</h1>
-                        <p class="game-subtitle">Co-op MMO Experience</p>
+                        <h1 class="game-title">GEOMETRY CORE</h1>
+                        <p class="game-subtitle">Co-op MMO Experience. Created for John Hopkins HopHacks 2025.</p>
                         
                         <div class="menu-container">
                             <button class="menu-button play-button" data-action="start-game">
                                 Play Now
-                            </button>
-                            
-                            <button class="menu-button" data-action="join-server">
-                                Join Server
                             </button>
                             
                             <div class="secondary-menu">

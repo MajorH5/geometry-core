@@ -10,6 +10,7 @@ public static partial class Module
         public const int SHOOTER = 2;
         public const int BLASTER = 3;
         public const int TANK = 4;
+        public const int CORE = 5;
     }
 
     [SpacetimeDB.Type]
@@ -22,7 +23,7 @@ public static partial class Module
         public int Spread; // spread between each shot
         public string Color; // color of each shot
         public float RateOfFire; // amount of shots taken per second
-        public int Lifetime; // how long each shot lasts
+        public float Lifetime; // how long each shot lasts
     }
 
     [Table(Name = "EnemyType", Public = true)]
@@ -33,6 +34,7 @@ public static partial class Module
         public int MaxHealth;
         public int Speed;
         public float Size;
+        public int Experience; // exp
         public ProjectileInfo ProjectileInfo;
     }
 
@@ -59,6 +61,7 @@ public static partial class Module
             MaxHealth = 15,
             Speed = 5,
             Size = 80,
+            Experience = 30,
             ProjectileInfo = new ProjectileInfo
             {
                 Amount = 1,
@@ -68,7 +71,8 @@ public static partial class Module
                 Spread = 0,
                 Color = "#ff0000",
                 RateOfFire = 3,
-                Lifetime = 1,
+                Lifetime = 1f,
+
             }
         });
 
@@ -78,6 +82,7 @@ public static partial class Module
             MaxHealth = 35,
             Speed = 1,
             Size = 40,
+            Experience = 65,
             ProjectileInfo = new ProjectileInfo
             {
                 Amount = 4,
@@ -87,7 +92,7 @@ public static partial class Module
                 Spread = 360 / 4,
                 Color = "#ff0000",
                 RateOfFire = 1,
-                Lifetime = 10,
+                Lifetime = 10f,
             }
         });
 
@@ -97,6 +102,7 @@ public static partial class Module
             MaxHealth = 40,
             Speed = 1,
             Size = 40,
+            Experience = 70,
             ProjectileInfo = new ProjectileInfo
             {
                 Amount = 1,
@@ -106,7 +112,7 @@ public static partial class Module
                 Spread = 10,
                 Color = "#18046fff",
                 RateOfFire = 1,
-                Lifetime = 20
+                Lifetime = 20f
             }
         });
 
@@ -116,6 +122,7 @@ public static partial class Module
             MaxHealth = 70,
             Speed = 1,
             Size = 40,
+            Experience = 100,
             ProjectileInfo = new ProjectileInfo
             {
                 Amount = 10,
@@ -125,7 +132,27 @@ public static partial class Module
                 Spread = 3,
                 Color = "#bb1d01ff",
                 RateOfFire = 0.1f,
-                Lifetime = 3
+                Lifetime = 3f
+            }
+        });
+
+        ctx.Db.EnemyType.Insert(new EnemyType
+        {
+            TypeId = EnemyTypeIds.CORE,
+            MaxHealth = 100,
+            Speed = 0,
+            Size = 50,
+            Experience = 0,
+            ProjectileInfo = new ProjectileInfo
+            {
+                Amount = 0,
+                Speed = 0,
+                Size = 0,
+                Damage = 0,
+                Spread = 0,
+                Color = "#000000",
+                RateOfFire = 0f,
+                Lifetime = 0f
             }
         });
 
@@ -147,6 +174,7 @@ public static partial class Module
         public bool IsDead;
         public bool IsFiring;
         public int AttackAngle;
+        public int Experience;
         public ProjectileInfo ProjectileInfo;
 
         // Position on grid
@@ -176,6 +204,7 @@ public static partial class Module
 
         if (enemy is null) { Log.Warn($"Enemy {enemyId} not found!"); return; }
         if (enemy.IsDead) { Log.Warn($"Enemy is dead and cannot move."); return; }
+        if (enemy.TypeId == EnemyTypeIds.CORE) { Log.Warn("Silly you cant damage the core!"); return; }
 
         var player = ctx.Db.Player.Identity.Find(ctx.Sender);
 
@@ -191,6 +220,57 @@ public static partial class Module
         {
             enemy.IsDead = true;
             enemy.Health = 0;
+            player.Experience += enemy.Experience;
+
+            if (player.Experience >= player.MaxExperience)
+            {
+                player.Experience = 0;
+                player.Level += 1;
+
+                // Randomly choose one upgrade (equal chance for each)
+                Random rand = new Random();
+                int upgradeChoice = rand.Next(0, 8); // 0-7 for 8 different upgrades
+
+                switch (upgradeChoice)
+                {
+                    case 0: // Increase player speed
+                        player.Speed = (int)Math.Ceiling(player.Speed * 1.1f);
+                        Log.Info($"Player {player.Id} speed increased to {player.Speed}");
+                        break;
+                    case 1: // Increase player max HP
+                        player.MaxHealth = (int)Math.Ceiling(player.MaxHealth * 1.1f);
+                        Log.Info($"Player {player.Id} max HP increased to {player.MaxHealth}");
+                        break;
+                    case 2: // Increase projectile speed
+                        player.ProjectileInfo.Speed = (int)Math.Ceiling(player.ProjectileInfo.Speed * 1.1f);
+                        Log.Info($"Player {player.Id} projectile speed increased to {player.ProjectileInfo.Speed}");
+                        break;
+                    case 3: // Increase projectile amount
+                        player.ProjectileInfo.Amount = (int)Math.Ceiling(player.ProjectileInfo.Amount * 1.1f);
+                        Log.Info($"Player {player.Id} projectile amount increased to {player.ProjectileInfo.Amount}");
+                        break;
+                    case 4: // Increase projectile damage
+                        player.ProjectileInfo.Damage = (int)Math.Ceiling(player.ProjectileInfo.Damage * 1.1f);
+                        Log.Info($"Player {player.Id} projectile damage increased to {player.ProjectileInfo.Damage}");
+                        break;
+                    case 5: // Increase rate of fire
+                        player.ProjectileInfo.RateOfFire = (int)Math.Ceiling(player.ProjectileInfo.RateOfFire * 1.1f);
+                        Log.Info($"Player {player.Id} rate of fire increased to {player.ProjectileInfo.RateOfFire}");
+                        break;
+                    case 6: // Increase projectile size
+                        player.ProjectileInfo.Size = (int)Math.Ceiling(player.ProjectileInfo.Size * 1.1f);
+                        Log.Info($"Player {player.Id} projectile size increased to {player.ProjectileInfo.Size}");
+                        break;
+                    case 7: // Increase player speed (duplicate for equal chance)
+                        player.Speed = (int)Math.Ceiling(player.Speed * 1.1f);
+                        Log.Info($"Player {player.Id} speed increased to {player.Speed}");
+                        break;
+                }
+            }
+
+            player.MaxExperience = 100 + (player.Level - 1) * 50;
+
+            ctx.Db.Player.Id.Update(player);
             ctx.Db.Enemy.Id.Update(enemy);
             ctx.Db.Enemy.Delete(enemy);
         }
@@ -242,6 +322,7 @@ public static partial class Module
             MaxHealth = scaledHealth,
             Health = scaledHealth,
             Speed = scaledSpeed,
+            Experience = enemyType.Experience,
             IsDead = false,
             ProjectileInfo = enemyType.ProjectileInfo,
             X = x,

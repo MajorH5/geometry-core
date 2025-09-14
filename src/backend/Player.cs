@@ -18,6 +18,9 @@ public static partial class Module
         public int AttackAngle;
         public bool IsDead;
         public bool IsOnline;
+        public int Experience;
+        public int Level;
+        public int MaxExperience;
 
         [SpacetimeDB.Unique]  // Each client gets only one Player
         public Identity Identity;
@@ -119,6 +122,9 @@ public static partial class Module
                 IsOnline = true,
                 X = world.Width / 2,
                 Y = world.Height / 2,
+                Experience = 0,
+                Level = 1,
+                MaxExperience = 100,
                 ProjectileInfo = new ProjectileInfo
                 {
                     Amount = 1,
@@ -127,8 +133,8 @@ public static partial class Module
                     Damage = 10,
                     Spread = 10,
                     Color = "#00e116ff",
-                    RateOfFire = 1,
-                    Lifetime = 1,
+                    RateOfFire = 1.75f,
+                    Lifetime = 1f,
                 }
             });
             Log.Info($"New player created for {ctx.Sender}");

@@ -5,9 +5,8 @@ export const Sound = (function () {
         src: string;
         loaded: boolean;
         buffer: AudioBuffer | null;
-        source: AudioBufferSourceNode;
-        gain: GainNode;
         volume: number;
+        loadPromise: Promise<void>;
 
         static AudioCache = new Map<string, AudioBuffer>();
         static GlobalAudioContext: AudioContext = new AudioContext();
@@ -18,16 +17,8 @@ export const Sound = (function () {
             this.buffer = null;
             this.volume = volume;
 
-            this.source = Sound.GlobalAudioContext.createBufferSource();
-            this.source.buffer = this.buffer;
-
-            this.gain = Sound.GlobalAudioContext.createGain();
-            this.gain.gain.value = this.volume;
-
-            this.source.connect(this.gain);
-            this.gain.connect(Sound.GlobalAudioContext.destination);
-
-            this.load(Sound.GlobalAudioContext);
+            // Start loading immediately and store the promise
+            this.loadPromise = this.load(Sound.GlobalAudioContext);
         }
 
         async load (audioContext: AudioContext): Promise<void> {
@@ -41,20 +32,55 @@ export const Sound = (function () {
                 return;
             }
 
-            const response = await fetch(`${Constants.ORIGIN}${this.src}`);
-            const arrayBuffer = await response.arrayBuffer();
-            this.buffer = await audioContext.decodeAudioData(arrayBuffer);
-            this.source.buffer = this.buffer;
-            this.loaded = true;
+            try {
+                const response = await fetch(`${Constants.ORIGIN}${this.src}`);
+                const arrayBuffer = await response.arrayBuffer();
+                this.buffer = await audioContext.decodeAudioData(arrayBuffer);
+                this.loaded = true;
 
-            Sound.AudioCache.set(this.src, this.buffer);
+                Sound.AudioCache.set(this.src, this.buffer);
+            } catch (error) {
+                console.error(`Failed to load sound: ${this.src}`, error);
+                throw error;
+            }
         }
 
-        play (audioContext: AudioContext = Sound.GlobalAudioContext): void {
-            if (!this.loaded || !this.buffer) throw new Error('Sound not loaded');
+        async play (audioContext: AudioContext = Sound.GlobalAudioContext): Promise<void> {
+            // Wait for loading to complete
+            await this.loadPromise;
             
-            this.source.start(0);
+            if (!this.loaded || !this.buffer) {
+                throw new Error('Sound not loaded');
+            }
+
+            // Create new source node each time (AudioBufferSourceNode can only be used once)
+            const source = audioContext.createBufferSource();
+            source.buffer = this.buffer;
+
+            const gain = audioContext.createGain();
+            gain.gain.value = this.volume;
+
+            source.connect(gain);
+            gain.connect(audioContext.destination);
+            
+            source.start(0);
         }
-            
+
+        // Alternative synchronous play method that doesn't throw if not loaded
+        tryPlay (audioContext: AudioContext = Sound.GlobalAudioContext): void {
+            if (this.loaded && this.buffer) {
+                const source = audioContext.createBufferSource();
+                source.buffer = this.buffer;
+
+                const gain = audioContext.createGain();
+                gain.gain.value = this.volume;
+
+                source.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                source.start(0);
+            }
+            // Silently fail if not loaded yet
+        }
     }
 })();

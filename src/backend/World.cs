@@ -51,6 +51,8 @@ public static partial class Module
         });
 
         InitEnemyTypes(ctx);
+
+        SpawnEnemy(ctx, EnemyTypeIds.CORE, world.Width / 2, world.Height / 2);
     }
 
     [Reducer]
@@ -117,48 +119,6 @@ public static partial class Module
                 // Heal 10% of max HP
                 int healAmount = (int)(player.MaxHealth * 0.1f);
                 player.Health = Math.Min(player.MaxHealth, player.Health + healAmount);
-
-                // Randomly choose one upgrade (equal chance for each)
-                int upgradeChoice = rand.Next(0, 9); // 0-7 for 8 different upgrades
-
-                switch (upgradeChoice)
-                {
-                    case 0: // Increase player speed
-                        player.Speed = (int)Math.Ceiling(player.Speed * 1.1f);
-                        Log.Info($"Player {player.Id} speed increased to {player.Speed}");
-                        break;
-                    case 1: // Increase player max HP
-                        player.MaxHealth = (int)Math.Ceiling(player.MaxHealth * 1.2f);
-                        Log.Info($"Player {player.Id} max HP increased to {player.MaxHealth}");
-                        break;
-                    case 2: // Increase projectile speed
-                        player.ProjectileInfo.Speed = (int)Math.Ceiling(player.ProjectileInfo.Speed * 1.1f);
-                        player.ProjectileInfo.Lifetime = (int)Math.Ceiling(player.ProjectileInfo.Lifetime * 1.1f);
-                        Log.Info($"Player {player.Id} projectile speed increased to {player.ProjectileInfo.Speed}");
-                        break;
-                    case 3: // Increase projectile amount
-                        player.ProjectileInfo.Amount = (int)Math.Ceiling(player.ProjectileInfo.Amount * 1.1f);
-                        player.ProjectileInfo.Lifetime = (int)Math.Ceiling(player.ProjectileInfo.Lifetime * 1.1f);
-                        Log.Info($"Player {player.Id} projectile amount increased to {player.ProjectileInfo.Amount}");
-                        break;
-                    case 4: // Increase projectile damage
-                        player.ProjectileInfo.Damage = (int)Math.Ceiling(player.ProjectileInfo.Damage * 1.5f);
-                        Log.Info($"Player {player.Id} projectile damage increased to {player.ProjectileInfo.Damage}");
-                        break;
-                    case 5: // Increase rate of fire
-                        player.ProjectileInfo.RateOfFire = (int)Math.Ceiling(player.ProjectileInfo.RateOfFire * 1.1f);
-                        player.ProjectileInfo.Lifetime = (int)Math.Ceiling(player.ProjectileInfo.Lifetime * 1.1f);
-                        Log.Info($"Player {player.Id} rate of fire increased to {player.ProjectileInfo.RateOfFire}");
-                        break;
-                    case 6: // Increase projectile size
-                        player.ProjectileInfo.Size = (int)Math.Ceiling(player.ProjectileInfo.Size * 1.1f);
-                        Log.Info($"Player {player.Id} projectile size increased to {player.ProjectileInfo.Size}");
-                        break;
-                    case 7: // Increase player speed (duplicate for equal chance)
-                        player.Speed = (int)Math.Ceiling(player.Speed * 1.1f);
-                        Log.Info($"Player {player.Id} speed increased to {player.Speed}");
-                        break;
-                }
 
                 ctx.Db.Player.Id.Update(player);
                 Log.Info($"Player {player.Id} healed {healAmount} HP (now {player.Health}/{player.MaxHealth})");
@@ -283,70 +243,79 @@ public static partial class Module
         // --- Move and shoot enemies ---
         foreach (var enemy in ctx.Db.Enemy.Iter())
         {
+
             if (enemy.IsDead) continue;
+            if (enemy.TypeId == EnemyTypeIds.CORE) continue;
+
+            if (!world.IsActive)
+            {
+                ctx.Db.Enemy.Id.Update(enemy);
+                ctx.Db.Enemy.Delete(enemy);
+                continue;
+            }
 
             // Check if this enemy is a SHOOTER type
-            if (enemy.TypeId == EnemyTypeIds.SHOOTER || enemy.TypeId == EnemyTypeIds.TANK || enemy.TypeId == EnemyTypeIds.BLASTER)
-            {
-                // Find the closest player to target
-                Player closestPlayer = null;
-                float closestDistance = float.MaxValue;
-
-                foreach (var player in ctx.Db.Player.Iter())
+                if (enemy.TypeId == EnemyTypeIds.SHOOTER || enemy.TypeId == EnemyTypeIds.TANK || enemy.TypeId == EnemyTypeIds.BLASTER)
                 {
-                    if (player.IsDead || !player.IsOnline) continue;
+                    // Find the closest player to target
+                    Player closestPlayer = null;
+                    float closestDistance = float.MaxValue;
 
-                    float dx = player.X - enemy.X;
-                    float dy = player.Y - enemy.Y;
-                    float distance = MathF.Sqrt(dx * dx + dy * dy);
-
-                    if (distance < closestDistance)
+                    foreach (var player in ctx.Db.Player.Iter())
                     {
-                        closestDistance = distance;
-                        closestPlayer = player;
+                        if (player.IsDead || !player.IsOnline) continue;
+
+                        float dx = player.X - enemy.X;
+                        float dy = player.Y - enemy.Y;
+                        float distance = MathF.Sqrt(dx * dx + dy * dy);
+
+                        if (distance < closestDistance)
+                        {
+                            closestDistance = distance;
+                            closestPlayer = player;
+                        }
                     }
-                }
 
-                // If we found a player to target
-                if (closestPlayer != null)
-                {
-                    // Calculate angle to target player
-                    float dx = closestPlayer.X - enemy.X;
-                    float dy = closestPlayer.Y - enemy.Y;
+                    // If we found a player to target
+                    if (closestPlayer != null)
+                    {
+                        // Calculate angle to target player
+                        float dx = closestPlayer.X - enemy.X;
+                        float dy = closestPlayer.Y - enemy.Y;
 
-                    // Calculate angle in degrees (0° = right, 90° = down, 180° = left, 270° = up)
-                    float angleRadians = MathF.Atan2(dy, dx);
-                    float angleDegrees = angleRadians * (180f / MathF.PI);
+                        // Calculate angle in degrees (0° = right, 90° = down, 180° = left, 270° = up)
+                        float angleRadians = MathF.Atan2(dy, dx);
+                        float angleDegrees = angleRadians * (180f / MathF.PI);
 
-                    // Normalize angle to 0-360 range
-                    if (angleDegrees < 0)
-                        angleDegrees += 360;
+                        // Normalize angle to 0-360 range
+                        if (angleDegrees < 0)
+                            angleDegrees += 360;
 
-                    // Add random spread of +/- 5 degrees
-                    float randomSpread = (float)(rand.NextDouble() * 10 - 5); // -5 to +5 degrees
-                    float finalAngle = angleDegrees + randomSpread;
+                        // Add random spread of +/- 5 degrees
+                        float randomSpread = (float)(rand.NextDouble() * 10 - 5); // -5 to +5 degrees
+                        float finalAngle = angleDegrees + randomSpread;
 
-                    // Normalize final angle to 0-360 range
-                    if (finalAngle < 0)
-                        finalAngle += 360;
-                    else if (finalAngle >= 360)
-                        finalAngle -= 360;
+                        // Normalize final angle to 0-360 range
+                        if (finalAngle < 0)
+                            finalAngle += 360;
+                        else if (finalAngle >= 360)
+                            finalAngle -= 360;
 
-                    // Attack with calculated angle
-                    Attack(ctx, enemy.Id, true, (int)finalAngle);
+                        // Attack with calculated angle
+                        Attack(ctx, enemy.Id, true, (int)finalAngle);
 
+                    }
+                    else
+                    {
+                        // No players found, shoot at core or don't shoot
+                        Attack(ctx, enemy.Id, true, 0);
+                    }
                 }
                 else
                 {
-                    // No players found, shoot at core or don't shoot
-                    Attack(ctx, enemy.Id, true, 0);
+                    // For non-shooter enemies, use original logic (or don't attack)
+                    Attack(ctx, enemy.Id, true, 0); // Comment this out if only shooters should attack
                 }
-            }
-            else
-            {
-                // For non-shooter enemies, use original logic (or don't attack)
-                Attack(ctx, enemy.Id, true, 0); // Comment this out if only shooters should attack
-            }
 
             // Move enemy toward core
             MoveEnemyTowardCore(ctx, enemy.Id);
@@ -460,18 +429,24 @@ public static partial class Module
         if (coreDistance < 15f) // Increased from 1f to be more forgiving
         {
             // Find and damage the core block
-            var coreBlock = ctx.Db.Block.Iter().FirstOrDefault(b => b.IsCore && !b.IsDestroyed);
-            if (coreBlock != null)
+            var core = ctx.Db.Enemy.Iter().FirstOrDefault(e => e.TypeId == EnemyTypeIds.CORE);
+            if (core != null)
             {
-                coreBlock.Health -= enemy.Health;
-                if (coreBlock.Health <= 0)
+                core.Health -= enemy.Health;
+                if (core.Health <= 0)
                 {
-                    coreBlock.Health = 0;
-                    coreBlock.IsDestroyed = true;
+                    core.Health = 0;
+                    core.IsDead = true;
+                    ctx.Db.Enemy.Id.Update(core);
+                    ctx.Db.Enemy.Delete(core);
+                    world.IsActive = false;
                     Log.Info("Core destroyed! Game over!");
                 }
-                ctx.Db.Block.Id.Update(coreBlock);
-                // Log.Info($"Enemy (#{enemy.Id}) dealt {enemy.Health} damage to the core! Core HP: {coreBlock.Health}");
+                else
+                {
+                    ctx.Db.Enemy.Id.Update(core);
+                }
+                Log.Info($"Enemy (#{enemy.Id}) dealt {enemy.Health} damage to the core! Core HP: {core.Health}");
             }
 
             // Delete enemy after hitting core

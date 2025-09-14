@@ -2,6 +2,7 @@ import { ProjectileInfo } from "./projectiles/projectileInfo.ts";
 import { Vector2 } from "../../utils/vector2";
 import { Entity } from "./entity.ts";
 import { Player as NetworkedPlayer } from "../../module_bindings/player_type.ts";
+import { TheCore } from "./the-core.ts";
 
 type Vector2Type = InstanceType<typeof Vector2>;
 
@@ -23,6 +24,9 @@ export const Player = (function () {
         attackAngle: number;
         keys: { [key: string]: boolean };
         playerName: string;
+        level: number;
+        experience: number;
+        maxExperience: number;
 
         constructor(isLocalPlayer: boolean = false, canvas: any) {
             super(PLAYER_HEALTH, false, {
@@ -37,6 +41,10 @@ export const Player = (function () {
             this.attackAngle = 0;
             this.keys = {};
 
+            this.level = 1;
+            this.experience = 0;
+            this.maxExperience = 100;
+
             if (this.isLocalPlayer) {
                 this.bindControls();
             }
@@ -44,7 +52,7 @@ export const Player = (function () {
             this.renderPriority = 10;
         }
 
-        loadState (networkedPlayer: any, isLocalPlayer: boolean | undefined) {
+        loadState(networkedPlayer: any, isLocalPlayer: boolean | undefined) {
             super.loadState(networkedPlayer, isLocalPlayer);
 
             this.playerName = networkedPlayer.name.substring(0, 10);
@@ -52,9 +60,21 @@ export const Player = (function () {
             if (!networkedPlayer.isOnline || networkedPlayer.isDead) {
                 this.despawn();
             }
+
+            this.level = networkedPlayer.level;
+            this.experience = networkedPlayer.experience;
+            this.maxExperience = networkedPlayer.maxExperience;
+
+            if (this.world !== null && this.isLocalPlayer) {
+                this.world.hud.updatePlayerStats({
+                    experience: this.experience,
+                    maxExperience: this.maxExperience,
+                    level: this.level,
+                });
+            }
         }
 
-        setHealth (health: number): void {
+        setHealth(health: number): void {
             super.setHealth(health);
 
             if (this.world !== null && this.isLocalPlayer) {
@@ -193,7 +213,7 @@ export const Player = (function () {
 
         update(deltaTime: number): void {
             super.update(deltaTime);
-            
+
             if (this.isLocalPlayer) {
                 this.updateMovementControls();
                 const attackDirection = this.getMouseDirection();
@@ -206,18 +226,25 @@ export const Player = (function () {
 
                 if (replicator.isConnected()) {
                     replicator.movePlayer(this.objectId, this.body.position.x, this.body.position.y);
-                    
+
                     let attackAngleDeg = this.attackAngle * (180 / Math.PI);
                     attackAngleDeg = ((attackAngleDeg % 360) + 360) % 360;
                     replicator.updateAttack(this.objectId, this.isFiring, Math.floor(attackAngleDeg));
                 }
             }
 
-            if (this.world !== null) {
+            if (this.world !== null && this.isLocalPlayer) {
+                const entities = Array.from(this.world.entityLookup.values());
+                const players = Array.from(this.world.playerLookup.values());
+
+                const corePosition = entities.find(e => e instanceof TheCore)?.body.position || new Vector2(0, 0);
                 this.world.hud.updateMinimap(
                     this.body.position,
-                    new Vector2(0, 0),
-                    Array.from(this.world.entityLookup.values()).map(e => {
+                    corePosition,
+                    entities.map(e => {
+                        return e.body.position;
+                    }),
+                    players.filter(p => p !== this).map(e => {
                         return e.body.position;
                     })
                 )
@@ -382,5 +409,5 @@ export const Player = (function () {
         }
 
     }
-    
+
 })();

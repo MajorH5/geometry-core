@@ -54,9 +54,9 @@ export const Projectile = (function () {
                             replicator.damageEnemy(gameObject.objectId);
 
                             const sounds = [
-                                new Sound('/assets/audio/hit_sfx_1.wav', 1),
-                                new Sound('/assets/audio/hit_sfx_2.wav', 1),
-                                new Sound('/assets/audio/hit_sfx_3.wav', 1),
+                                new Sound('/assets/audio/hit_sfx_1.wav', 0.25),
+                                new Sound('/assets/audio/hit_sfx_2.wav', 0.25),
+                                new Sound('/assets/audio/hit_sfx_3.wav', 0.25),
                             ];
                             const sound = sounds[Math.floor(Math.random() * sounds.length)];
                             sound.play();
