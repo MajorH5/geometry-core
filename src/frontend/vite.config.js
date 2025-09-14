@@ -11,7 +11,7 @@ export default defineConfig({
             'realmspriter.com',
             'www.realmspriter.com'
         ],
-        port: 3000,
+        port: 5123,
         open: true,
     },
 });
