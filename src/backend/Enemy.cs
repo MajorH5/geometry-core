@@ -6,7 +6,7 @@ public static partial class Module
 {
     public static class EnemyTypeIds
     {
-        public const int RUSHER = 1;
+        public const int SPIKER = 1;
         public const int SHOOTER = 2;
         public const int BLASTER = 3;
     }
@@ -52,19 +52,19 @@ public static partial class Module
 
         ctx.Db.EnemyType.Insert(new EnemyType
         {
-            TypeId = EnemyTypeIds.RUSHER,
+            TypeId = EnemyTypeIds.SPIKER,
             MaxHealth = 100,
             Speed = 1,
             Size = 80,
             ProjectileInfo = new ProjectileInfo
             {
-                Amount = 0,
-                Speed = 0,
-                Size = 0,
-                Damage = 0,
-                Spread = 0,
+                Amount = 1,
+                Speed = 1,
+                Size = 1,
+                Damage = 1,
+                Spread = 1,
                 Color = "#ff0000",
-                RateOfFire = 0,
+                RateOfFire = 1,
             }
         });
 

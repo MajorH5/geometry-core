@@ -80,8 +80,8 @@ public static partial class Module
 
         ctx.Db.Block.Insert(new Block
         {
-            X = 0,
-            Y = 0,
+            X = world.Width / 2,
+            Y = world.Height / 2,
             Health = 1000, // Big HP pool
             IsDestroyed = false,
             Cost = 0,
@@ -101,144 +101,146 @@ public static partial class Module
         world.Tick++;
         ctx.Db.World.Id.Update(world);
 
-        if (world.Tick % 60 == 0)
+        if (world.Tick == 5)
         {
-            SpawnEnemy(ctx, EnemyTypeIds.RUSHER, world.Width, world.Height / 2);
-            SpawnEnemy(ctx, EnemyTypeIds.SHOOTER, world.Width / 2, world.Height / 2);
-            SpawnEnemy(ctx, EnemyTypeIds.BLASTER, world.Width / 2, world.Height / 2);
+            SpawnEnemy(ctx, EnemyTypeIds.SPIKER, 0, 0);
+            // SpawnEnemy(ctx, EnemyTypeIds.SHOOTER, world.Width / 2, world.Height / 2);
+            // SpawnEnemy(ctx, EnemyTypeIds.BLASTER, world.Width / 2, world.Height / 2);
         }
 
-        /*
-        Random rand = new Random();
+        // Random rand = new Random();
 
-        if (world.Tick % world.SpawnRate == 0)
-        {
-            for (int i = 0; i < world.CurrentWave; i++)
-            {
-                SpawnEnemy(ctx, 100 + world.Tick, 5 + world.Tick, 5 + world.Tick, 1);
-            }
-        }
+        // if (world.Tick % world.SpawnRate == 0)
+        // {
+        //     for (int i = 0; i < world.CurrentWave; i++)
+        //     {
+        //         SpawnEnemy(ctx, 100 + world.Tick, 5 + world.Tick, 5 + world.Tick, 1);
+        //     }
+        // }
 
         // --- Move and shoot enemies ---
         foreach (var enemy in ctx.Db.Enemy.Iter())
         {
             if (enemy.IsDead) continue;
+            // enemy.X += 0.1f;
+            // enemy.Y += 0.1f;
+            // ctx.Db.Enemy.Id.Update(enemy);
 
-            MoveEnemyTowardCore(ctx, enemy.Id);
+            MoveEnemyTowardCore(ctx, enemy.Id, world.Width/2, world.Height/2);
 
-            // Initialize NextShootTick if first time
-            if (enemy.NextShootTick == 0)
-            {
-                enemy.NextShootTick = world.Tick + rand.Next(10, 30); // small delay after spawn
-                ctx.Db.Enemy.Id.Update(enemy);
-                continue;
-            }
+            // // Initialize NextShootTick if first time
+            // if (enemy.NextShootTick == 0)
+            // {
+            //     enemy.NextShootTick = world.Tick + rand.Next(10, 30); // small delay after spawn
+            //     ctx.Db.Enemy.Id.Update(enemy);
+            //     continue;
+            // }
 
-            // Check if it's time to shoot
-            if (world.Tick >= enemy.NextShootTick)
-            {
-                bool spreadShot = rand.NextDouble() < 0.5;
+            // // Check if it's time to shoot
+            // if (world.Tick >= enemy.NextShootTick)
+            // {
+            //     bool spreadShot = rand.NextDouble() < 0.5;
 
-                if (spreadShot)
-                {
-                    EnemySpreadShot(ctx, enemy.Id, 6, 0.5f + 0.01f * world.Tick); // speed scales with tick
-                }
-                else
-                {
-                    EnemyShootAtClosestPlayer(ctx, enemy.Id, 0.5f + 0.01f * world.Tick);
-                }
+            //     if (spreadShot)
+            //     {
+            //         EnemySpreadShot(ctx, enemy.Id, 6, 0.5f + 0.01f * world.Tick); // speed scales with tick
+            //     }
+            //     else
+            //     {
+            //         EnemyShootAtClosestPlayer(ctx, enemy.Id, 0.5f + 0.01f * world.Tick);
+            //     }
 
-                // Random delay until next shot
-                enemy.NextShootTick = world.Tick + rand.Next(10, 40);
-                ctx.Db.Enemy.Id.Update(enemy);
-            }
+            //     // Random delay until next shot
+            //     enemy.NextShootTick = world.Tick + rand.Next(10, 40);
+            //     ctx.Db.Enemy.Id.Update(enemy);
+            // }
         }
 
-        // --- Spawn new enemies based on wave ---
-        if (world.Tick % (int)(1f / world.SpawnRate) == 0)
-        {
-            for (int i = 0; i < world.CurrentWave; i++)
-            {
-                SpawnEnemy(ctx, 100 + world.Tick, 5 + world.Tick, 5 + world.Tick, 1);
-            }
-        }
+        // // --- Spawn new enemies based on wave ---
+        // if (world.Tick % (int)(1f / world.SpawnRate) == 0)
+        // {
+        //     for (int i = 0; i < world.CurrentWave; i++)
+        //     {
+        //         SpawnEnemy(ctx, 100 + world.Tick, 5 + world.Tick, 5 + world.Tick, 1);
+        //     }
+        // }
 
-        // --- Update projectiles ---
-        foreach (var projectile in ctx.Db.Projectile.Iter())
-        {
-            // Move projectile
-            projectile.X += projectile.VelocityX;
-            projectile.Y += projectile.VelocityY;
+        // // --- Update projectiles ---
+        // foreach (var projectile in ctx.Db.Projectile.Iter())
+        // {
+        //     // Move projectile
+        //     projectile.X += projectile.VelocityX;
+        //     projectile.Y += projectile.VelocityY;
 
-            // Enemy projectiles hitting players
-            if (projectile.FromEnemy)
-            {
-                foreach (var player in ctx.Db.Player.Iter())
-                {
-                    if (player.IsDead) continue;
+        //     // Enemy projectiles hitting players
+        //     if (projectile.FromEnemy)
+        //     {
+        //         foreach (var player in ctx.Db.Player.Iter())
+        //         {
+        //             if (player.IsDead) continue;
 
-                    float dx = player.X - projectile.X;
-                    float dy = player.Y - projectile.Y;
+        //             float dx = player.X - projectile.X;
+        //             float dy = player.Y - projectile.Y;
 
-                    if (MathF.Sqrt(dx * dx + dy * dy) < 1.0f)
-                    {
-                        player.Health -= projectile.Damage;
-                        if (player.Health <= 0)
-                        {
-                            player.Health = 0;
-                            player.IsDead = true;
-                            Log.Info($"Player (#{player.Id}) was killed by a projectile!");
-                        }
-                        ctx.Db.Player.Id.Update(player);
+        //             if (MathF.Sqrt(dx * dx + dy * dy) < 1.0f)
+        //             {
+        //                 player.Health -= projectile.Damage;
+        //                 if (player.Health <= 0)
+        //                 {
+        //                     player.Health = 0;
+        //                     player.IsDead = true;
+        //                     Log.Info($"Player (#{player.Id}) was killed by a projectile!");
+        //                 }
+        //                 ctx.Db.Player.Id.Update(player);
 
-                        // Remove projectile after hitting
-                        ctx.Db.Projectile.Id.Delete(projectile.Id);
-                        break;
-                    }
-                }
-            }
+        //                 // Remove projectile after hitting
+        //                 ctx.Db.Projectile.Id.Delete(projectile.Id);
+        //                 break;
+        //             }
+        //         }
+        //     }
 
-            // Player projectiles hitting enemies
-            if (!projectile.FromEnemy)
-            {
-                foreach (var enemy in ctx.Db.Enemy.Iter())
-                {
-                    if (enemy.IsDead) continue;
+        //     // Player projectiles hitting enemies
+        //     if (!projectile.FromEnemy)
+        //     {
+        //         foreach (var enemy in ctx.Db.Enemy.Iter())
+        //         {
+        //             if (enemy.IsDead) continue;
 
-                    float dx = enemy.X - projectile.X;
-                    float dy = enemy.Y - projectile.Y;
+        //             float dx = enemy.X - projectile.X;
+        //             float dy = enemy.Y - projectile.Y;
 
-                    if (MathF.Sqrt(dx * dx + dy * dy) < 1.0f) // collision radius
-                    {
-                        enemy.Health -= projectile.Damage;
-                        if (enemy.Health <= 0)
-                        {
-                            enemy.Health = 0;
-                            enemy.IsDead = true;
-                            Log.Info($"Enemy (#{enemy.Id}) was killed by a player projectile!");
-                        }
-                        ctx.Db.Enemy.Id.Update(enemy);
+        //             if (MathF.Sqrt(dx * dx + dy * dy) < 1.0f) // collision radius
+        //             {
+        //                 enemy.Health -= projectile.Damage;
+        //                 if (enemy.Health <= 0)
+        //                 {
+        //                     enemy.Health = 0;
+        //                     enemy.IsDead = true;
+        //                     Log.Info($"Enemy (#{enemy.Id}) was killed by a player projectile!");
+        //                 }
+        //                 ctx.Db.Enemy.Id.Update(enemy);
 
-                        // Remove projectile after hitting
-                        ctx.Db.Projectile.Id.Delete(projectile.Id);
-                        break; // stop checking other enemies
-                    }
-                }
-            }
+        //                 // Remove projectile after hitting
+        //                 ctx.Db.Projectile.Id.Delete(projectile.Id);
+        //                 break; // stop checking other enemies
+        //             }
+        //         }
+        //     }
 
-            // Remove projectile if out of bounds
-            if (MathF.Abs(projectile.X) > world.Width / 2 || MathF.Abs(projectile.Y) > world.Height / 2)
-            {
-                ctx.Db.Projectile.Id.Delete(projectile.Id);
-                continue;
-            }
+        //     // Remove projectile if out of bounds
+        //     if (MathF.Abs(projectile.X) > world.Width / 2 || MathF.Abs(projectile.Y) > world.Height / 2)
+        //     {
+        //         ctx.Db.Projectile.Id.Delete(projectile.Id);
+        //         continue;
+        //     }
 
-            // Update projectile in DB
-            ctx.Db.Projectile.Id.Update(projectile);
-        }
+        //     // Update projectile in DB
+        //     ctx.Db.Projectile.Id.Update(projectile);
+        // }
 
-        Log.Info($"World tick updated: {world.Tick}");
-        */
+        // Log.Info($"World tick updated: {world.Tick}");
+        
     }
 
     // ////////////////////////////////////////////////////////////////////////////////
@@ -321,13 +323,13 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void MoveEnemyTowardCore(ReducerContext ctx, int enemyId)
+    public static void MoveEnemyTowardCore(ReducerContext ctx, int enemyId, int centerX, int centerY)
     {
         var enemy = ctx.Db.Enemy.Id.Find(enemyId);
         if (enemy is null || enemy.IsDead) return;
 
-        float targetX = 0;
-        float targetY = 0;
+        float targetX = centerX;
+        float targetY = centerY;
 
         float dx = targetX - enemy.X;
         float dy = targetY - enemy.Y;
@@ -346,49 +348,49 @@ public static partial class Module
         float nextX = enemy.X + stepX;
         float nextY = enemy.Y + stepY;
 
-        // --- Check collisions ---
+        // // --- Check collisions ---
 
-        // Blocks
-        foreach (var block in ctx.Db.Block.Iter())
-        {
-            if (!block.IsDestroyed &&
-                MathF.Abs(block.X - nextX) < 1 &&
-                MathF.Abs(block.Y - nextY) < 1)
-            {
-                DamageBlock(ctx, block.Id, enemy.Attack);
-                Log.Info($"Enemy (#{enemy.Id}) attacked block {block.Id} at ({block.X},{block.Y})");
-                enemy.IsDead = true;
-                ctx.Db.Enemy.Id.Update(enemy);
-                return;
-            }
-        }
+        // // Blocks
+        // foreach (var block in ctx.Db.Block.Iter())
+        // {
+        //     if (!block.IsDestroyed &&
+        //         MathF.Abs(block.X - nextX) < 1 &&
+        //         MathF.Abs(block.Y - nextY) < 1)
+        //     {
+        //         DamageBlock(ctx, block.Id, enemy.Attack);
+        //         Log.Info($"Enemy (#{enemy.Id}) attacked block {block.Id} at ({block.X},{block.Y})");
+        //         enemy.IsDead = true;
+        //         ctx.Db.Enemy.Id.Update(enemy);
+        //         return;
+        //     }
+        // }
 
-        // Players
-        foreach (var player in ctx.Db.Player.Iter())
-        {
-            if (player.IsDead) continue;
-            if (MathF.Sqrt((player.X - nextX) * (player.X - nextX) + (player.Y - nextY) * (player.Y - nextY)) < 1f)
-            {
-                player.Health -= enemy.Attack;
-                if (player.Health <= 0)
-                {
-                    player.Health = 0;
-                    player.IsDead = true;
-                    Log.Info($"Player (#{player.Id}) killed by enemy!");
-                }
-                ctx.Db.Player.Id.Update(player);
-                enemy.IsDead = true;
-                ctx.Db.Enemy.Id.Update(enemy);
-                return;
-            }
-        }
+        // // Players
+        // foreach (var player in ctx.Db.Player.Iter())
+        // {
+        //     if (player.IsDead) continue;
+        //     if (MathF.Sqrt((player.X - nextX) * (player.X - nextX) + (player.Y - nextY) * (player.Y - nextY)) < 1f)
+        //     {
+        //         player.Health -= enemy.Attack;
+        //         if (player.Health <= 0)
+        //         {
+        //             player.Health = 0;
+        //             player.IsDead = true;
+        //             Log.Info($"Player (#{player.Id}) killed by enemy!");
+        //         }
+        //         ctx.Db.Player.Id.Update(player);
+        //         enemy.IsDead = true;
+        //         ctx.Db.Enemy.Id.Update(enemy);
+        //         return;
+        //     }
+        // }
 
         // Core
-        if (MathF.Sqrt(nextX * nextX + nextY * nextY) < 1f)
+        if (MathF.Sqrt((targetX - nextX) * (targetX - nextX) +
+                   (targetY - nextY) * (targetY - nextY)) < 1f)
         {
             Log.Info($"Enemy (#{enemy.Id}) damaged the core!");
-            enemy.IsDead = true;
-            ctx.Db.Enemy.Id.Update(enemy);
+            ctx.Db.Enemy.Id.Delete(enemy.Id);
             return;
         }
 
