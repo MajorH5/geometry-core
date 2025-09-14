@@ -90,6 +90,16 @@ export class Replicator {
     }
 
     // Reducer calls - using the correct conn.reducers API
+    public damagePlayer(enemyId: number): void {
+        if (!this.conn) throw new Error('Not connected');
+
+        try {
+            this.conn.reducers.damagePlayer(enemyId);
+        } catch (error) {
+            console.error('Failed to damage self:', error);
+            throw error;
+        }
+    }
 
     public damageEnemy(enemyId: number): void {
         if (!this.conn) throw new Error('Not connected');

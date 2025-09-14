@@ -1,6 +1,7 @@
 import { GameObject } from "../gameobject";
 import { Vector2 } from "../../../utils/vector2";
 import { Entity } from "../entity";
+import { ProjectileInfo } from "./projectileInfo";
 
 type Vector2Type = InstanceType<typeof Vector2>;
 
@@ -8,14 +9,16 @@ export const Projectile = (function () {
     return class Projectile extends GameObject {
         lifetime: number;
         source: any;
+        projectileInfo: InstanceType<typeof ProjectileInfo>;
 
-        constructor(source: any, origin: Vector2Type, velocity: Vector2Type, projectileInfo: any) {
+        constructor(source: any, origin: Vector2Type, velocity: Vector2Type, projectileInfo: InstanceType<typeof ProjectileInfo>) {
             super({
                 position: origin,
                 velocity: velocity,
                 size: projectileInfo.size
             });
 
+            this.projectileInfo = projectileInfo;
             this.lifetime = projectileInfo.lifetime;
             this.source = source;
 
@@ -28,7 +31,7 @@ export const Projectile = (function () {
                 if (!this.isSpawned) {
                     return;
                 }
-                
+
                 const gameObject = other.getTag('gameobject');
 
                 if (other.solid || (gameObject && !(gameObject instanceof Projectile) && gameObject !== this.source)) {
@@ -37,14 +40,13 @@ export const Projectile = (function () {
                     }
 
                     const replicator = this.world?.getReplicator();
-                    
+
                     if (replicator) {
                         if (this.source.hostile && !gameObject.hostile && gameObject.isLocalPlayer) {
                             // local player hit, report this
-    
+                            replicator.damagePlayer(this.source.objectId);
                         } else if (this.source.isLocalPlayer && gameObject.hostile) {
                             // we hit a bad guy
-                            console.log("enemy damaged")
                             replicator.damageEnemy(gameObject.objectId);
                         }
                     }
@@ -71,18 +73,24 @@ export const Projectile = (function () {
             const baseSize = Math.max(this.body.size.x, this.body.size.y) * scale;
             const time = this.getElapsedTimeMs() * 0.001;
 
+            // Parse hex color and extract RGB values
+            const hexColor = this.projectileInfo.color || '#FF64FF';
+            const r = parseInt(hexColor.substr(1, 2), 16);
+            const g = parseInt(hexColor.substr(3, 2), 16);
+            const b = parseInt(hexColor.substr(5, 2), 16);
+
             context.save();
 
-            // Create pulsating glow effect
+            // Create pulsating glow effect using base color
             const glowRadius = baseSize * 1.5;
             const glowPulse = Math.sin(time * 8) * 0.3 + 0.7;
             const gradient = context.createRadialGradient(
                 centerX, centerY, baseSize * 0.3,
                 centerX, centerY, glowRadius * glowPulse
             );
-            gradient.addColorStop(0, 'rgba(255, 100, 255, 0.8)');
-            gradient.addColorStop(0.5, 'rgba(150, 50, 255, 0.4)');
-            gradient.addColorStop(1, 'rgba(100, 200, 255, 0)');
+            gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.8)`);
+            gradient.addColorStop(0.5, `rgba(${Math.floor(r * 0.8)}, ${Math.floor(g * 0.6)}, ${Math.floor(b * 1.2)}, 0.4)`);
+            gradient.addColorStop(1, `rgba(${Math.floor(r * 0.7)}, ${Math.floor(g * 1.1)}, ${Math.floor(b * 1.3)}, 0)`);
 
             context.fillStyle = gradient;
             context.beginPath();
@@ -112,18 +120,18 @@ export const Projectile = (function () {
                 context.lineTo(-currentSize * 0.7, 0); // Left
                 context.closePath();
 
-                // Gradient fill for each layer
+                // Gradient fill for each layer using base color variations
                 const layerGradient = context.createRadialGradient(0, 0, 0, 0, 0, currentSize);
                 if (layer === 0) {
                     layerGradient.addColorStop(0, `rgba(255, 255, 255, ${layerAlpha})`);
-                    layerGradient.addColorStop(0.6, `rgba(255, 100, 255, ${layerAlpha * 0.8})`);
-                    layerGradient.addColorStop(1, `rgba(150, 50, 255, ${layerAlpha * 0.4})`);
+                    layerGradient.addColorStop(0.6, `rgba(${r}, ${g}, ${b}, ${layerAlpha * 0.8})`);
+                    layerGradient.addColorStop(1, `rgba(${Math.floor(r * 0.7)}, ${Math.floor(g * 0.5)}, ${Math.floor(b * 1.1)}, ${layerAlpha * 0.4})`);
                 } else if (layer === 1) {
-                    layerGradient.addColorStop(0, `rgba(200, 150, 255, ${layerAlpha})`);
-                    layerGradient.addColorStop(1, `rgba(100, 200, 255, ${layerAlpha * 0.6})`);
+                    layerGradient.addColorStop(0, `rgba(${Math.floor(r * 0.9 + 55)}, ${Math.floor(g * 0.8 + 70)}, ${Math.floor(b * 1.1)}, ${layerAlpha})`);
+                    layerGradient.addColorStop(1, `rgba(${Math.floor(r * 0.6 + 45)}, ${Math.floor(g * 1.2 + 55)}, ${Math.floor(b * 1.3)}, ${layerAlpha * 0.6})`);
                 } else {
-                    layerGradient.addColorStop(0, `rgba(100, 200, 255, ${layerAlpha})`);
-                    layerGradient.addColorStop(1, `rgba(50, 150, 255, ${layerAlpha * 0.4})`);
+                    layerGradient.addColorStop(0, `rgba(${Math.floor(r * 0.5 + 50)}, ${Math.floor(g * 1.1 + 89)}, ${Math.floor(b * 1.4)}, ${layerAlpha})`);
+                    layerGradient.addColorStop(1, `rgba(${Math.floor(r * 0.3 + 50)}, ${Math.floor(g * 0.9 + 61)}, ${Math.floor(b * 1.5)}, ${layerAlpha * 0.4})`);
                 }
 
                 context.fillStyle = layerGradient;
@@ -161,7 +169,7 @@ export const Projectile = (function () {
                 context.lineTo(-spikeSize * 0.3, spikeSize * 0.5);
                 context.closePath();
 
-                context.fillStyle = `rgba(255, 150, 255, 0.7)`;
+                context.fillStyle = `rgba(${Math.floor(r * 1.1)}, ${Math.floor(g * 0.8 + 70)}, ${Math.floor(b * 1.2)}, 0.7)`;
                 context.fill();
                 context.strokeStyle = `rgba(255, 255, 255, 0.9)`;
                 context.lineWidth = 1 * scale;
@@ -170,12 +178,12 @@ export const Projectile = (function () {
                 context.restore();
             }
 
-            // Central core with intense glow
+            // Central core with intense glow using base color
             const coreSize = baseSize * 0.4;
             const corePulse = Math.sin(time * 12) * 0.4 + 0.6;
 
             // Core glow
-            context.shadowColor = 'rgba(255, 100, 255, 0.8)';
+            context.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
             context.shadowBlur = 15 * scale;
 
             context.beginPath();
@@ -186,7 +194,7 @@ export const Projectile = (function () {
             // Reset shadow
             context.shadowBlur = 0;
 
-            // Add energy trails based on velocity direction
+            // Add energy trails based on velocity direction using base color
             if (this.body.velocity.x !== 0 || this.body.velocity.y !== 0) {
                 const trailAngle = Math.atan2(this.body.velocity.y, this.body.velocity.x) + Math.PI;
                 const trailLength = baseSize * 2;
@@ -200,7 +208,7 @@ export const Projectile = (function () {
 
                     context.beginPath();
                     context.arc(trailX, trailY, trailSize, 0, Math.PI * 2);
-                    context.fillStyle = `rgba(150, 100, 255, ${trailAlpha})`;
+                    context.fillStyle = `rgba(${Math.floor(r * 0.8)}, ${Math.floor(g * 0.7 + 30)}, ${Math.floor(b * 1.3)}, ${trailAlpha})`;
                     context.fill();
                 }
             }

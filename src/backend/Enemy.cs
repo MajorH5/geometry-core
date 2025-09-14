@@ -60,12 +60,12 @@ public static partial class Module
             ProjectileInfo = new ProjectileInfo
             {
                 Amount = 1,
-                Speed = 1,
-                Size = 1,
-                Damage = 1,
-                Spread = 1,
+                Speed = 10,
+                Size = 20,
+                Damage = 5,
+                Spread = 0,
                 Color = "#ff0000",
-                RateOfFire = 1,
+                RateOfFire = 3,
             }
         });
 
@@ -83,7 +83,7 @@ public static partial class Module
                 Damage = 20,
                 Spread = 0,
                 Color = "#412121ff",
-                RateOfFire = 1,
+                RateOfFire = 3,
             }
         });
 
@@ -120,10 +120,9 @@ public static partial class Module
         public int MaxHealth;
         public int Health;
         public int Speed;
-        public int Attack;
-        public int AttackSpeed;
         public bool IsDead;
-        public int NextShootTick;
+        public bool IsFiring;
+        public int AttackAngle;
         public ProjectileInfo ProjectileInfo;
 
         // Position on grid
@@ -131,6 +130,20 @@ public static partial class Module
         public float Y;
     }
     // ---------------- Reducers ----------------
+
+    [Reducer]
+    public static void Attack(ReducerContext ctx, int enemyId, bool isAttacking, int shootAngle = 0)
+    {
+        var enemy = ctx.Db.Enemy.Id.Find(enemyId);
+
+        if (enemy is null) { Log.Warn($"Enemy {enemyId} not found!"); return; }
+        if (enemy.IsDead) { Log.Warn($"Enemy is dead and cannot shoot."); return; }
+
+        enemy.IsFiring = isAttacking;
+        enemy.AttackAngle = shootAngle;
+
+        ctx.Db.Enemy.Id.Update(enemy);
+    }
 
     [Reducer]
     public static void DamageEnemy(ReducerContext ctx, int enemyId)
@@ -152,6 +165,9 @@ public static partial class Module
 
         if (enemy.Health <= 0)
         {
+            enemy.IsDead = true;
+            enemy.Health = 0;
+            ctx.Db.Enemy.Id.Update(enemy);
             ctx.Db.Enemy.Delete(enemy);
         }
         else
@@ -199,73 +215,15 @@ public static partial class Module
         {
             TypeId = typeId,
             ObjectId = GenerateRandomInt(),
+            MaxHealth = scaledHealth,
             Health = scaledHealth,
             Speed = scaledSpeed,
-            Attack = 10,
-            AttackSpeed = 10,
             IsDead = false,
             ProjectileInfo = enemyType.ProjectileInfo,
             X = x,
             Y = y
         });
 
-    }
-
-    [Reducer]
-    public static void MoveEnemy(ReducerContext ctx, int enemyId, int newX, int newY)
-    {
-        var enemy = ctx.Db.Enemy.Id.Find(enemyId);
-        if (enemy is null) { Log.Warn($"Enemy {enemyId} not found!"); return; }
-        if (enemy.IsDead) { Log.Warn($"Enemy is dead and cannot move."); return; }
-
-        enemy.X = newX;
-        enemy.Y = newY;
-
-        ctx.Db.Enemy.Id.Update(enemy);
-        Log.Info($" enemy moved to ({enemy.X}, {enemy.Y})");
-    }
-
-    [Reducer]
-    public static void UpdateEnemyHealth(ReducerContext ctx, int enemyId, int amount)
-    {
-        var enemy = ctx.Db.Enemy.Id.Find(enemyId);
-        if (enemy is null) { Log.Warn($"Enemy with ID {enemyId} not found!"); return; }
-        if (enemy.IsDead) { Log.Warn($"Enemy (#{enemy.Id}) is already dead."); return; }
-
-        enemy.Health += amount;
-        if (enemy.Health <= 0)
-        {
-            enemy.Health = 0;
-            enemy.IsDead = true;
-            Log.Info($"Enemy (#{enemy.Id}) has died!");
-        }
-
-        ctx.Db.Enemy.Id.Update(enemy);
-        Log.Info($"Enemy's Health updated to {enemy.Health}");
-    }
-
-
-    ////////////////////////////////////////////////////////////////////
-    /// 
-    ///  PROJECTILES
-    /// 
-    /// /////////////////////////////////////////////////////////////////////
-
-    // ---------------- Projectile Table ----------------
-    [Table(Name = "Projectile", Public = true)]
-    public partial class Projectile
-    {
-        [AutoInc]
-        [PrimaryKey]
-        public int Id;
-
-        public float X;
-        public float Y;
-        public float VelocityX;
-        public float VelocityY;
-        public int Damage;
-        public bool FromEnemy;
-        public float Angle;
     }
 
     [Reducer]
@@ -309,47 +267,8 @@ public static partial class Module
 
         float angleDeg = MathF.Atan2(dy, dx) * (180 / MathF.PI); // 0° is to the right
 
-        // Insert projectile
-        ctx.Db.Projectile.Insert(new Projectile
-        {
-            X = enemy.X,
-            Y = enemy.Y,
-            VelocityX = velocityX,
-            VelocityY = velocityY,
-            Damage = enemy.Attack,
-            Angle = angleDeg,
-            FromEnemy = true
-        });
-
         // Log angle for websocket clients
         Log.Info($"Enemy (#{enemy.Id}) fired at closest player (#{closestPlayer.Id}) with angle {MathF.Atan2(dyTarget, dxTarget)} rad");
-    }
-
-
-    [Reducer]
-    public static void EnemySpreadShot(ReducerContext ctx, int enemyId, int count, float speed)
-    {
-        var enemy = ctx.Db.Enemy.Id.Find(enemyId);
-        if (enemy is null || enemy.IsDead) return;
-
-        for (int i = 0; i < count; i++)
-        {
-            float angle = i * (2 * MathF.PI / count);
-            float velocityX = MathF.Cos(angle) * speed;
-            float velocityY = MathF.Sin(angle) * speed;
-
-            ctx.Db.Projectile.Insert(new Projectile
-            {
-                X = enemy.X,
-                Y = enemy.Y,
-                VelocityX = velocityX,
-                VelocityY = velocityY,
-                Damage = enemy.Attack,
-                FromEnemy = true
-            });
-        }
-
-        Log.Info($"Enemy (#{enemy.Id}) fired a spreading shot with {count} projectiles");
     }
 
 }

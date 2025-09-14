@@ -11,6 +11,7 @@ export const ProjectileInfo = (function () {
         color: string;
         spread: number;
         rateOfFire: number;
+        lifetime: number;
 
         constructor (config: any) {
             this.amount = config.amount || 0;
@@ -19,7 +20,8 @@ export const ProjectileInfo = (function () {
             this.damage = config.damage || 0;
             this.color = config.color || '#fffffff';
             this.spread = config.spread || 0;
-            this.rateOfFire = config.rateOffire || 1;
+            this.rateOfFire = config.rateOfFire || 1;
+            this.lifetime = config.lifetime || 1;
         }
     }
 })();

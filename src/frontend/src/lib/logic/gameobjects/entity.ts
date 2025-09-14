@@ -34,11 +34,15 @@ export const Entity = (function () {
             this.lastAttack = -Infinity;
         }
 
-        loadState (networkEntity: any) {
+        loadState (networkEntity: any, isLocalPlayer: boolean | undefined) {
             this.health = networkEntity.health;
             this.maxHealth = networkEntity.maxHealth;
-            console.log(this.health, this.maxHealth, this.hostile)
-            this.setPosition(new Vector2(networkEntity.x, networkEntity.y));
+
+            if (!isLocalPlayer) {
+                this.attackAngle = networkEntity.attackAngle * (Math.PI / 180);
+                this.isFiring = networkEntity.isFiring;
+                this.setPosition(new Vector2(networkEntity.x, networkEntity.y));
+            }
 
             const projectileInfo = networkEntity.projectileInfo;
 
@@ -54,7 +58,7 @@ export const Entity = (function () {
         }
 
         canFireProjectile(): boolean {
-            return this.isFiring && ((Date.now() - this.lastAttack) / 1000) >= this.projectileInfo.rateOfFire;
+            return this.isFiring && ((Date.now() - this.lastAttack) / 1000) >= (1 / this.projectileInfo.rateOfFire);
         }
 
         setProjectileInfo (projectileInfo: InstanceType<typeof ProjectileInfo>) {

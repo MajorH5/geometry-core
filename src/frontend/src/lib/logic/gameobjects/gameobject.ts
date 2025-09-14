@@ -35,11 +35,11 @@ export const GameObject = (function () {
         }
 
         isOnScreen(offset: Vector2Type, scale: number): boolean {
-            if (!this.isSpawned) {
+            if (!this.world) {
                 return false;
             }
 
-            const canvasSize = Constants.CANVAS_SIZE;
+            const canvasSize = new Vector2(this.world.canvas.width, this.world.canvas.height);
 
             const screenSize = this.body.size.scale(scale);
             const screenPosition = this.getScreenPosition(offset, scale);

@@ -7,7 +7,7 @@ import { Vector2 } from "./utils/vector2";
 import { TheCore } from "./logic/gameobjects/the-core";
 import type { Player as PlayerType } from "./module_bindings";
 import { EnemyTypeIds } from "./logic/gameobjects/enemies/enemyTypeIds";
-import { Rusher } from "./logic/gameobjects/enemies/rusher";
+import { Spiker } from "./logic/gameobjects/enemies/spiker";
 import { Entity } from "./logic/gameobjects/entity";
 import { Shooter } from "./logic/gameobjects/enemies/shooter";
 
@@ -21,6 +21,7 @@ export const GeometryCore = (function () {
         private isRunning: boolean;
         private lastFrameTime: number | null;
         private world: InstanceType<typeof World> | null;
+        private resizeHandler: () => void;
 
         constructor(canvas: HTMLCanvasElement) {
             this.canvas = canvas;
@@ -39,11 +40,34 @@ export const GeometryCore = (function () {
 
             this.world = null;
 
-            this.world = new World(new Vector2(500, 500), this.replicator);
+            this.world = new World(new Vector2(500, 500), this.replicator, this.canvas);
 
             const core = new TheCore();
             this.world.spawn(core);
             core.setPosition(this.world.worldSize.div(2), true);
+
+            // Bind the resize handler
+            this.resizeHandler = this.handleResize.bind(this);
+        }
+
+        private handleResize(): void {
+            this.resizeCanvas();
+        }
+
+        private resizeCanvas(): void {
+            const dpr: number = window.devicePixelRatio || 1;
+
+            // Set canvas size to window size
+            this.canvas.width = window.innerWidth * dpr;
+            this.canvas.height = window.innerHeight * dpr;
+
+            this.canvas.style.width = window.innerWidth + 'px';
+            this.canvas.style.height = window.innerHeight + 'px';
+
+            // Re-apply canvas settings after resize
+            this.context.scale(dpr, dpr);
+            this.context.imageSmoothingEnabled = false;
+            (this.context as any).textRenderingOptimization = 'optimizeSpeed';
         }
 
         initialize(): void {
@@ -53,33 +77,21 @@ export const GeometryCore = (function () {
 
             this.initialized = true;
 
-            const dpr: number = window.devicePixelRatio || 1;
+            // Initial canvas resize
+            this.resizeCanvas();
 
-            this.canvas.width = Constants.CANVAS_SIZE.x * dpr;
-            this.canvas.height = Constants.CANVAS_SIZE.y * dpr;
-
-            this.canvas.style.width = Constants.CANVAS_SIZE.x + 'px';
-            this.canvas.style.height = Constants.CANVAS_SIZE.y + 'px';
-
-            this.context.scale(dpr, dpr);
-
-            this.context.imageSmoothingEnabled = false;
-            (this.context as any).textRenderingOptimization = 'optimizeSpeed';
+            // Add resize event listener
+            window.addEventListener('resize', this.resizeHandler);
 
             this.replicator.connect().then(() => {
                 this.replicator.onPlayerUpdate((ctx, _, newNetworkedPlayer) => {
                     if (this.world === null) return;
 
                     const isLocalPlayer = newNetworkedPlayer.identity.data === this.replicator.getIdentity()?.data;
-
-                    if (isLocalPlayer) {
-                        return;
-                    }
-
                     const player = this.world.playerLookup.get(newNetworkedPlayer.id) as InstanceType<typeof Player> | undefined;
 
                     if (player) {
-                        player.loadState(newNetworkedPlayer);
+                        player.loadState(newNetworkedPlayer, isLocalPlayer);
                     }
                 });
 
@@ -89,14 +101,14 @@ export const GeometryCore = (function () {
                     const isLocalPlayer = networkedPlayer.identity.data === this.replicator.getIdentity()?.data;
 
                     if (isLocalPlayer) {
-                        this.localPlayer.loadState(networkedPlayer)
+                        this.localPlayer.loadState(networkedPlayer, isLocalPlayer)
                         this.world.spawn(this.localPlayer, networkedPlayer.id);
                         this.world.camera.setSubject(this.localPlayer);
                         return;
                     }
 
                     const player = new Player(isLocalPlayer, this.canvas);
-                    player.loadState(networkedPlayer)
+                    player.loadState(networkedPlayer, isLocalPlayer)
                     this.world.spawn(player, networkedPlayer.id);
                 });
 
@@ -109,29 +121,29 @@ export const GeometryCore = (function () {
                         return;
                     }
 
-                    const player = this.world.playerLookup.get(networkedPlayer.id) as InstanceType<typeof Player> | undefined;
+                    const entity = this.world.playerLookup.get(networkedPlayer.id) as InstanceType<typeof Player> | undefined;
 
-                    if (player) {
-                        this.world.despawn(player);
+                    if (entity) {
+                        this.world.despawn(entity);
                     }
                 });
 
                 this.replicator.onEnemyInsert((_, networkedEnemy) => {
                     if (!this.world) return;
-                    let enemy: InstanceType<typeof Entity> | null = null;
+                    let entity: InstanceType<typeof Entity> | null = null;
 
                     switch (networkedEnemy.typeId) {
                         case EnemyTypeIds.RUSHER:
-                            enemy = new Rusher();
+                            entity = new Spiker();
                             break;
                         case EnemyTypeIds.SHOOTER:
-                            enemy = new Shooter();
+                            entity = new Shooter();
                             break;
                     }
 
-                    if (enemy !== null) {
-                        enemy.loadState(networkedEnemy);
-                        this.world.spawn(enemy, networkedEnemy.id);
+                    if (entity !== null) {
+                        entity.loadState(networkedEnemy, false);
+                        this.world.spawn(entity, networkedEnemy.id);
                     } else {
                     }
                 });
@@ -139,10 +151,10 @@ export const GeometryCore = (function () {
                 this.replicator.onEnemyUpdate((ctx, _, networkedEnemy) => {
                     if (this.world === null) return;
 
-                    const player = this.world.entityLookup.get(networkedEnemy.id) as InstanceType<typeof Entity> | undefined;
+                    const entity = this.world.entityLookup.get(networkedEnemy.id) as InstanceType<typeof Entity> | undefined;
 
-                    if (player) {
-                        player.loadState(networkedEnemy);
+                    if (entity) {
+                        entity.loadState(networkedEnemy, false);
                     }
                 });
 
@@ -188,6 +200,11 @@ export const GeometryCore = (function () {
             }
 
             this.isRunning = false;
+        }
+
+        destroy(): void {
+            this.stop();
+            window.removeEventListener('resize', this.resizeHandler);
         }
 
         private update(deltaTime: number): void {

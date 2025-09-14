@@ -44,19 +44,15 @@ export const Player = (function () {
             this.renderPriority = 10;
         }
 
-        loadState (networkedPlayer: any) {
-            super.loadState(networkedPlayer);
+        loadState (networkedPlayer: any, isLocalPlayer: boolean | undefined) {
+            super.loadState(networkedPlayer, isLocalPlayer);
 
             this.playerName = networkedPlayer.name.substring(0, 10);
-            this.attackAngle = networkedPlayer.attackAngle * (Math.PI / 180);
-            this.isFiring = networkedPlayer.isFiring;
 
             if (!networkedPlayer.isOnline || networkedPlayer.isDead) {
                 this.despawn();
             }
         }
-
-        
 
         bindControls(): void {
             document.addEventListener('keydown', (event) => {

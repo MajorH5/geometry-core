@@ -101,10 +101,10 @@ public static partial class Module
         world.Tick++;
         ctx.Db.World.Id.Update(world);
 
-        if (world.Tick % (60 * 10) == 0)
+        if (world.Tick % (60 * 4) == 0)
         {
             SpawnEnemy(ctx, EnemyTypeIds.SPIKER, 0, 0);
-            // SpawnEnemy(ctx, EnemyTypeIds.SHOOTER, world.Width / 2, world.Height / 2);
+            SpawnEnemy(ctx, EnemyTypeIds.SHOOTER, world.Width - 100, world.Height - 100);
             // SpawnEnemy(ctx, EnemyTypeIds.BLASTER, world.Width / 2, world.Height / 2);
         }
 
@@ -122,6 +122,7 @@ public static partial class Module
         foreach (var enemy in ctx.Db.Enemy.Iter())
         {
             if (enemy.IsDead) continue;
+            Attack(ctx, enemy.Id, true, 30);
             // enemy.X += 0.1f;
             // enemy.Y += 0.1f;
             // ctx.Db.Enemy.Id.Update(enemy);
@@ -399,7 +400,7 @@ public static partial class Module
         enemy.Y = nextY;
         ctx.Db.Enemy.Id.Update(enemy);
 
-        Log.Info($"Enemy (#{enemy.Id}) moved to ({enemy.X}, {enemy.Y})");
+        // Log.Info($"Enemy (#{enemy.Id}) moved to ({enemy.X}, {enemy.Y})");
     }
 
     // Note: You'll need to implement these methods that are referenced in UpdateWorldTick:

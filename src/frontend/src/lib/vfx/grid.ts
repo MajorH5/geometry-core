@@ -3,23 +3,21 @@ import { Vector2 } from "../utils/vector2.ts";
 
 export const Grid = (function () {
     return class Grid extends Vfx {
-        private width: number;
-        private height: number;
+        private canvas: HTMLCanvasElement;
         private spacing: number;
         private majorEvery: number;
 
-        constructor(width: number, height: number, spacing: number = 20, majorEvery: number = 5) {
+        constructor(canvas: HTMLCanvasElement, spacing: number = 20, majorEvery: number = 5) {
             super();
 
-            this.width = width;
-            this.height = height;
+            this.canvas = canvas;
             this.spacing = spacing;
             this.majorEvery = majorEvery;
         }
 
-        render(context: CanvasRenderingContext2D, offset: Vector2, scale: number): void {
-            const width = this.width;
-            const height = this.height;
+        render(context: CanvasRenderingContext2D, offset: InstanceType<typeof Vector2>, scale: number): void {
+            const width = this.canvas.width;
+            const height = this.canvas.height;
 
             const spacing = this.spacing * scale;
             const majorEvery = this.majorEvery;

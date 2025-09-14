@@ -26,20 +26,22 @@ export const World = (function () {
         visualEffects: any[];
         playerLookup: Map<number, InstanceGameObject>;
         entityLookup: Map<number, InstanceGameObject>;
+        canvas: HTMLCanvasElement;
 
-        constructor(worldSize: InstanceVector2, replicator: InstanceReplicator) {
+        constructor(worldSize: InstanceVector2, replicator: InstanceReplicator, canvas: HTMLCanvasElement) {
+            this.canvas = canvas;
             this.worldSize = worldSize;
             this.gameObjects = [];
             this.physics = new Physics(worldSize);
             this.particleManager = new ParticleManager();
-            this.camera = new Camera();
+            this.camera = new Camera(this);
             this.playerLookup = new Map();
             this.entityLookup = new Map();
             this.replicator = replicator;
 
             this.visualEffects = [
                 // new Grid(worldSize.x, worldSize.y),
-                new Grid(Constants.CANVAS_SIZE.x, Constants.CANVAS_SIZE.y),
+                new Grid(this.canvas),
             ];
         }
 

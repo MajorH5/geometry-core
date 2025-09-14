@@ -1,6 +1,7 @@
 import { Constants } from "../utils/constants";
 import { Vector2 } from "../utils/vector2";
 import { GameObject } from "./gameobjects/gameobject.ts";
+import type { World } from "./world.ts";
 
 type Vector2Type = InstanceType<typeof Vector2>;
 
@@ -11,8 +12,10 @@ export const Camera = (function () {
         smoothness: number;
         scale: number;
         anchorPoint: Vector2Type;
+        world: InstanceType<typeof World>;
 
-        constructor() {
+        constructor(world: InstanceType<typeof World>) {
+            this.world = world;
             this.subject = null;
             this.offset = new Vector2(0, 0);
             this.smoothness = 0.10;
@@ -51,7 +54,8 @@ export const Camera = (function () {
                 return new Vector2(0, 0);
             }
 
-            const offset = Constants.CANVAS_SIZE.multiply(this.anchorPoint).scale(-1).div(this.scale);
+            const canvasSize = new Vector2(this.world.canvas.width, this.world.canvas.height);
+            const offset = canvasSize.multiply(this.anchorPoint).scale(-1).div(this.scale);
             return target.add(offset);
         }
 

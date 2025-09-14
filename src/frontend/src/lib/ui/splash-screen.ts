@@ -4,46 +4,6 @@ export class SplashScreen {
 
     constructor(container: HTMLDivElement) {
         this.container = container;
-        this.setupHTML();
-    }
-
-    private setupHTML(): void {
-        this.container.innerHTML = `
-            <div class="splash-screen">
-                <!-- Background grid pattern -->
-                <div class="grid-background"></div>
-                
-                <!-- First logo -->
-                <div class="logo-container logo-1">
-                    <div class="geometric-logo">
-                        <div class="triangle triangle-1"></div>
-                        <div class="triangle triangle-2"></div>
-                        <div class="triangle triangle-3"></div>
-                        <div class="circle center-circle"></div>
-                    </div>
-                </div>
-                
-                <!-- Second logo -->
-                <div class="logo-container logo-2">
-                    <div class="geometric-logo-2">
-                        <div class="hexagon"></div>
-                        <div class="inner-shapes">
-                            <div class="diamond diamond-1"></div>
-                            <div class="diamond diamond-2"></div>
-                            <div class="diamond diamond-3"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Floating geometric elements -->
-                <div class="floating-elements">
-                    <div class="float-shape triangle-float"></div>
-                    <div class="float-shape circle-float"></div>
-                    <div class="float-shape square-float"></div>
-                    <div class="float-shape diamond-float"></div>
-                </div>
-            </div>
-        `;
     }
 
     public async start(): Promise<void> {
@@ -53,44 +13,57 @@ export class SplashScreen {
     }
 
     private playSequence(onComplete: () => void): void {
-        const splash = this.container.querySelector('.splash-screen') as HTMLElement;
+        // The container IS the splash screen element
+        const splash = this.container;
         const logo1 = this.container.querySelector('.logo-1') as HTMLElement;
         const logo2 = this.container.querySelector('.logo-2') as HTMLElement;
         const floatingElements = this.container.querySelector('.floating-elements') as HTMLElement;
 
-        // Start with everything hidden
-        logo1.style.opacity = '1';
-        logo2.style.opacity = '1';
+        if (!logo1 || !logo2 || !floatingElements) {
+            console.error('Could not find required elements');
+            onComplete();
+            return;
+        }
+
+        // Ensure splash is visible
         splash.style.opacity = '1';
 
-        // Start floating elements animation
+        // Start floating elements animation immediately
         floatingElements.style.animation = 'floatingElements 8s ease-in-out infinite';
 
-        // Sequence timeline
+        // Sequence timeline with proper timing
         const timeline = [
-            // Show first logo
+            // Show first logo with zoom and fade in
             { time: 500, action: () => {
+                console.log('Showing logo 1');
                 logo1.classList.add('zoom-in');
             }},
             // Hide first logo
             { time: 2500, action: () => {
+                console.log('Hiding logo 1');
+                logo1.classList.remove('zoom-in');
                 logo1.classList.add('fade-out');
             }},
             // Show second logo
-            { time: 3000, action: () => {
+            { time: 3200, action: () => {
+                console.log('Showing logo 2');
                 logo2.classList.add('zoom-in');
             }},
-            // Hide second logo and fade out splash
-            { time: 5000, action: () => {
+            // Hide second logo
+            { time: 5200, action: () => {
+                console.log('Hiding logo 2');
+                logo2.classList.remove('zoom-in');
                 logo2.classList.add('fade-out');
             }},
-            // Complete fade out
+            // Complete fade out of entire splash
             { time: 6000, action: () => {
+                console.log('Fading out splash');
                 splash.style.opacity = '0';
                 splash.style.transition = 'opacity 0.5s ease-out';
             }},
             // Finish
             { time: 6500, action: () => {
+                console.log('Animation complete');
                 onComplete();
             }}
         ];
@@ -99,5 +72,9 @@ export class SplashScreen {
         timeline.forEach(step => {
             setTimeout(step.action, step.time);
         });
+    }
+
+    public destroy(): void {
+        this.container.innerHTML = '';
     }
 }

@@ -2,7 +2,7 @@ canvas {
     margin: auto;
     display: block;
     position: absolute;
-    border: 1px solid black;
+    border: none;
     top: 0;
     left: 0;
     bottom: 0;
@@ -20,228 +20,223 @@ canvas {
 }
 
 body {
-    overflow: hidden;
     margin: 0;
     padding: 0;
-    background: #f8f9fa;
+    background: #fafafa;
+    overflow: hidden;
+    font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* Splash Screen Styles */
 .splash-screen {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    overflow: hidden;
+    transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Grid Background */
 .grid-background {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: 
-        linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px);
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
     background-size: 40px 40px;
     opacity: 0.6;
-    animation: gridFloat 4s ease-in-out infinite alternate;
+    animation: gridMove 30s linear infinite;
 }
 
-@keyframes gridFloat {
-    0% { transform: translate(0, 0); }
-    100% { transform: translate(10px, 5px); }
+@keyframes gridMove {
+    0% {
+        transform: translate(0, 0);
+    }
+    100% {
+        transform: translate(40px, 40px);
+    }
 }
 
-/* Logo Containers */
 .logo-container {
     position: absolute;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 200px;
-    height: 200px;
     opacity: 0;
-    transform: scale(0.5);
-    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    transform: scale(0.8);
+    transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .logo-container.zoom-in {
     opacity: 1;
     transform: scale(1);
-    animation: logoGlow 1.5s ease-in-out infinite alternate;
 }
 
 .logo-container.fade-out {
     opacity: 0;
-    transform: scale(1.2);
+    transform: scale(0.95);
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-@keyframes logoGlow {
-    0% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); }
-    100% { filter: drop-shadow(0 0 20px rgba(255,255,255,0.8)); }
-}
-
-/* First Logo - Triangular Design */
+/* First Logo Styles - Clean Geometric */
 .geometric-logo {
     position: relative;
-    width: 120px;
-    height: 120px;
+    width: 160px;
+    height: 160px;
 }
 
 .triangle {
     position: absolute;
     width: 0;
     height: 0;
-    border-style: solid;
+    animation: subtleFloat 4s ease-in-out infinite;
 }
 
 .triangle-1 {
-    border-left: 30px solid transparent;
-    border-right: 30px solid transparent;
-    border-bottom: 52px solid #fff;
-    top: 10px;
-    left: 30px;
-    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
-    animation: triangleFloat1 2s ease-in-out infinite;
+    border-left: 24px solid transparent;
+    border-right: 24px solid transparent;
+    border-bottom: 42px solid #2c2c2c;
+    top: 30px;
+    left: 56px;
+    animation-delay: 0s;
 }
 
 .triangle-2 {
-    border-left: 25px solid transparent;
-    border-right: 25px solid transparent;
-    border-bottom: 43px solid #f1f3f4;
-    top: 30px;
-    left: 10px;
-    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
-    animation: triangleFloat2 2s ease-in-out infinite 0.3s;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 35px solid #666666;
+    top: 45px;
+    left: 40px;
+    animation-delay: 0.8s;
 }
 
 .triangle-3 {
-    border-left: 25px solid transparent;
-    border-right: 25px solid transparent;
-    border-bottom: 43px solid #e8eaed;
-    top: 30px;
-    right: 10px;
-    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
-    animation: triangleFloat3 2s ease-in-out infinite 0.6s;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 30px solid #999999;
+    top: 65px;
+    left: 86px;
+    animation-delay: 1.6s;
 }
 
 .center-circle {
-    width: 20px;
-    height: 20px;
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    background: #1a1a1a;
     border-radius: 50%;
-    background: #fff;
-    border: 2px solid #dee2e6;
-    top: 50px;
-    left: 50px;
-    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
-    animation: centerPulse 1.5s ease-in-out infinite;
+    top: 64px;
+    left: 64px;
+    animation: centerPulse 3s ease-in-out infinite;
+    border: 2px solid #f0f0f0;
 }
 
-@keyframes triangleFloat1 {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-5px); }
-}
-
-@keyframes triangleFloat2 {
-    0%, 100% { transform: translateY(0px) translateX(0px); }
-    50% { transform: translateY(-3px) translateX(2px); }
-}
-
-@keyframes triangleFloat3 {
-    0%, 100% { transform: translateY(0px) translateX(0px); }
-    50% { transform: translateY(-3px) translateX(-2px); }
+@keyframes subtleFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-3px) rotate(2deg);
+    }
 }
 
 @keyframes centerPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(26, 26, 26, 0.1);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 8px rgba(26, 26, 26, 0.05);
+    }
 }
 
-/* Second Logo - Hexagonal Design */
+/* Second Logo Styles - Hexagonal Grid */
 .geometric-logo-2 {
     position: relative;
-    width: 140px;
-    height: 140px;
+    width: 160px;
+    height: 160px;
 }
 
 .hexagon {
+    position: absolute;
     width: 80px;
     height: 80px;
-    background: #fff;
-    position: absolute;
-    top: 30px;
-    left: 30px;
-    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-    filter: drop-shadow(2px 2px 8px rgba(0,0,0,0.1));
-    animation: hexagonRotate 3s linear infinite;
+    top: 40px;
+    left: 40px;
+    background: #2c2c2c;
+    clip-path: polygon(25% 6.7%, 75% 6.7%, 100% 50%, 75% 93.3%, 25% 93.3%, 0% 50%);
+    animation: slowSpin 8s linear infinite;
+    border: 1px solid #f5f5f5;
 }
 
 .inner-shapes {
     position: absolute;
-    top: 45px;
-    left: 45px;
-    width: 50px;
-    height: 50px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .diamond {
     position: absolute;
-    width: 12px;
-    height: 12px;
-    background: #e9ecef;
+    width: 8px;
+    height: 8px;
+    background: #666666;
     transform: rotate(45deg);
+    animation: innerFloat 4s ease-in-out infinite;
+    border: 1px solid #e8e8e8;
 }
 
 .diamond-1 {
-    top: 5px;
-    left: 19px;
-    animation: diamondFloat1 2s ease-in-out infinite;
+    top: -20px;
+    left: -4px;
+    animation-delay: 0s;
 }
 
 .diamond-2 {
-    top: 20px;
-    left: 8px;
-    animation: diamondFloat2 2s ease-in-out infinite 0.3s;
+    top: 8px;
+    left: -24px;
+    animation-delay: 1.3s;
 }
 
 .diamond-3 {
-    top: 20px;
-    right: 8px;
-    animation: diamondFloat3 2s ease-in-out infinite 0.6s;
+    top: 8px;
+    left: 16px;
+    animation-delay: 2.6s;
 }
 
-@keyframes hexagonRotate {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes slowSpin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
-@keyframes diamondFloat1 {
-    0%, 100% { transform: rotate(45deg) translateY(0px); }
-    50% { transform: rotate(45deg) translateY(-3px); }
+@keyframes innerFloat {
+    0%, 100% {
+        transform: rotate(45deg) translateY(0);
+        opacity: 0.8;
+    }
+    50% {
+        transform: rotate(45deg) translateY(-6px);
+        opacity: 1;
+    }
 }
 
-@keyframes diamondFloat2 {
-    0%, 100% { transform: rotate(45deg) translateX(0px); }
-    50% { transform: rotate(45deg) translateX(2px); }
-}
-
-@keyframes diamondFloat3 {
-    0%, 100% { transform: rotate(45deg) translateX(0px); }
-    50% { transform: rotate(45deg) translateX(-2px); }
-}
-
-/* Floating Elements */
+/* Floating Elements - Minimal */
 .floating-elements {
     position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
@@ -249,89 +244,425 @@ body {
 
 .float-shape {
     position: absolute;
-    opacity: 0.3;
+    animation: minimalFloat 12s ease-in-out infinite;
 }
 
 .triangle-float {
     width: 0;
     height: 0;
-    border-left: 15px solid transparent;
-    border-right: 15px solid transparent;
-    border-bottom: 26px solid #fff;
-    top: 20%;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 10px solid rgba(44, 44, 44, 0.15);
+    top: 15%;
     left: 15%;
-    animation: floatUp 6s ease-in-out infinite;
+    animation-delay: 0s;
 }
 
 .circle-float {
-    width: 20px;
-    height: 20px;
+    width: 12px;
+    height: 12px;
+    background: rgba(102, 102, 102, 0.15);
     border-radius: 50%;
-    background: #f1f3f4;
-    top: 30%;
+    top: 70%;
     right: 20%;
-    animation: floatDown 5s ease-in-out infinite 1s;
+    animation-delay: 3s;
 }
 
 .square-float {
-    width: 18px;
-    height: 18px;
-    background: #e8eaed;
+    width: 8px;
+    height: 8px;
+    background: rgba(153, 153, 153, 0.15);
     transform: rotate(45deg);
-    bottom: 25%;
-    left: 25%;
-    animation: floatLeft 7s ease-in-out infinite 2s;
+    top: 25%;
+    right: 15%;
+    animation-delay: 6s;
 }
 
 .diamond-float {
+    width: 10px;
+    height: 10px;
+    background: rgba(26, 26, 26, 0.15);
+    transform: rotate(45deg);
+    bottom: 30%;
+    left: 25%;
+    animation-delay: 9s;
+}
+
+@keyframes minimalFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.1;
+    }
+    25% {
+        transform: translateY(-15px) rotate(45deg);
+        opacity: 0.3;
+    }
+    50% {
+        transform: translateY(-25px) rotate(90deg);
+        opacity: 0.2;
+    }
+    75% {
+        transform: translateY(-15px) rotate(135deg);
+        opacity: 0.15;
+    }
+}
+
+/* Title Screen Styles */
+.title-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    transition: opacity 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.title-screen .grid-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+    opacity: 0.4;
+    animation: titleGridMove 40s linear infinite;
+}
+
+@keyframes titleGridMove {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(60px, 60px); }
+}
+
+/* Header with branding */
+.header {
+    position: relative;
+    z-index: 10;
+    padding: 40px 60px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.game-jam-logos {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.logo-placeholder {
+    width: 48px;
+    height: 48px;
+    background: #e8e8e8;
+    border: 2px solid #d0d0d0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    color: #666;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.logo-placeholder:hover {
+    border-color: #999;
+    background: #f0f0f0;
+}
+
+.player-stats {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.online-count {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.online-number {
+    color: #2c2c2c;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.server-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #999;
+}
+
+.status-dot {
+    width: 6px;
+    height: 6px;
+    background: #4CAF50;
+    border-radius: 50%;
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+@keyframes statusPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+/* Main content area */
+.main-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 10;
+}
+
+.game-info {
+    text-align: center;
+    max-width: 600px;
+}
+
+.game-title {
+    font-size: 72px;
+    font-weight: 200;
+    letter-spacing: -2px;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #2c2c2c 0%, #666 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: titleFloat 6s ease-in-out infinite;
+}
+
+.game-subtitle {
+    font-size: 18px;
+    color: #666;
+    font-weight: 400;
+    margin-bottom: 40px;
+    letter-spacing: 0.5px;
+}
+
+@keyframes titleFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* Menu buttons */
+.menu-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+}
+
+.menu-button {
+    background: transparent;
+    border: 2px solid #e0e0e0;
+    padding: 16px 48px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #2c2c2c;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+    overflow: hidden;
+    min-width: 200px;
+    font-family: inherit;
+}
+
+.menu-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(44, 44, 44, 0.05), transparent);
+    transition: left 0.5s ease;
+}
+
+.menu-button:hover::before {
+    left: 100%;
+}
+
+.menu-button:hover {
+    border-color: #2c2c2c;
+    background: rgba(44, 44, 44, 0.02);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(44, 44, 44, 0.1);
+}
+
+.menu-button:active {
+    transform: translateY(0);
+}
+
+.play-button {
+    background: #2c2c2c;
+    color: white;
+    border-color: #2c2c2c;
+    font-weight: 600;
+}
+
+.play-button:hover {
+    background: #1a1a1a;
+    border-color: #1a1a1a;
+}
+
+.secondary-menu {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.secondary-button {
+    background: transparent;
+    border: 1px solid #d0d0d0;
+    padding: 12px 24px;
+    font-size: 14px;
+    color: #666;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.secondary-button:hover {
+    border-color: #999;
+    color: #2c2c2c;
+    background: rgba(44, 44, 44, 0.02);
+}
+
+/* Floating geometric elements for title screen */
+.title-screen .floating-elements {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.title-screen .float-shape {
+    position: absolute;
+    animation: gentleFloat 15s ease-in-out infinite;
+}
+
+.shape-1 {
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 14px solid rgba(44, 44, 44, 0.08);
+    top: 20%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.shape-2 {
     width: 16px;
     height: 16px;
-    background: #dee2e6;
-    transform: rotate(45deg);
-    top: 60%;
+    background: rgba(102, 102, 102, 0.06);
+    border-radius: 50%;
+    top: 70%;
     right: 15%;
-    animation: floatRight 4s ease-in-out infinite 1.5s;
+    animation-delay: 5s;
 }
 
-@keyframes floatUp {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-20px) rotate(15deg); }
+.shape-3 {
+    width: 12px;
+    height: 12px;
+    background: rgba(153, 153, 153, 0.08);
+    transform: rotate(45deg);
+    top: 30%;
+    right: 25%;
+    animation-delay: 10s;
 }
 
-@keyframes floatDown {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(15px); }
+.shape-4 {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(44, 44, 44, 0.06);
+    border-radius: 4px;
+    bottom: 25%;
+    left: 20%;
+    animation-delay: 7s;
 }
 
-@keyframes floatLeft {
-    0%, 100% { transform: rotate(45deg) translateX(0px); }
-    50% { transform: rotate(45deg) translateX(-10px); }
+.shape-5 {
+    width: 24px;
+    height: 2px;
+    background: rgba(102, 102, 102, 0.08);
+    top: 15%;
+    right: 35%;
+    animation-delay: 12s;
 }
 
-@keyframes floatRight {
-    0%, 100% { transform: rotate(45deg) translateX(0px); }
-    50% { transform: rotate(45deg) translateX(10px); }
+@keyframes gentleFloat {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 0.3;
+    }
+    33% {
+        transform: translateY(-20px) rotate(120deg);
+        opacity: 0.6;
+    }
+    66% {
+        transform: translateY(-10px) rotate(240deg);
+        opacity: 0.4;
+    }
 }
 
-@keyframes floatingElements {
-    0%, 100% { opacity: 0.3; }
-    50% { opacity: 0.6; }
+/* Version info */
+.version-info {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    font-size: 12px;
+    color: #999;
+    z-index: 10;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-    .logo-container {
-        width: 150px;
-        height: 150px;
+    .header {
+        padding: 20px 30px 10px;
+        flex-direction: column;
+        gap: 20px;
     }
-    
-    .geometric-logo {
-        width: 90px;
-        height: 90px;
+
+    .game-title {
+        font-size: 48px;
     }
-    
-    .geometric-logo-2 {
-        width: 110px;
-        height: 110px;
+
+    .menu-button {
+        min-width: 280px;
+        padding: 18px 32px;
+    }
+
+    .secondary-menu {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .secondary-button {
+        width: 100%;
     }
 }

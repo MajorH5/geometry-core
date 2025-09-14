@@ -119,59 +119,47 @@ public static partial class Module
                 ProjectileInfo = new ProjectileInfo
                 {
                     Amount = 2,
-                    Speed = 6,
-                    Size = 30,
-                    Damage = 1000,
+                    Speed = 10,
+                    Size = 25,
+                    Damage = 10,
                     Spread = 10,
-                    Color = "#ff0000",
-                    RateOfFire = 2,
+                    Color = "#00B2E1",
+                    RateOfFire = 4,
                 }
             });
             Log.Info($"New player created for {ctx.Sender}");
         }
     }
 
-
-    // ---- Individual Stat Updates ----
     [Reducer]
-    public static void UpdateHealth(ReducerContext ctx, int playerId, int amount)
+    public static void DamagePlayer(ReducerContext ctx, int enemyId)
     {
-        var player = ctx.Db.Player.Id.Find(playerId);
-        if (player is null)
+        var player = ctx.Db.Player.Identity.Find(ctx.Sender);
+
+        if (player is null) { Log.Warn($"Player not found!"); return; }
+        if (player.IsDead) { Log.Warn($"Player is dead and cannot be hit."); return; }
+
+        var enemy = ctx.Db.Enemy.Id.Find(enemyId);
+
+        if (enemy is null)
         {
-            Log.Warn($"Player with ID {playerId} not found!");
+            Log.Warn("cannot damage player");
             return;
         }
 
-        if (player.IsDead)
-        {
-            Log.Warn($"{player.Name} (#{player.Id}) is dead. Health cannot be changed.");
-            return;
-        }
-
-        player.Health += amount;
+        player.Health -= enemy.ProjectileInfo.Damage;
 
         if (player.Health <= 0)
         {
-            player.Health = 0;
-            player.IsDead = true;
-            Log.Info($"{player.Name} (#{player.Id}) has died!");
+            // player.IsDead = true;
+            player.Health = 1;
+            ctx.Db.Player.Id.Update(player);
+            // ctx.Db.Player.Delete(player);
         }
-
-        ctx.Db.Player.Id.Update(player);
-        Log.Info($"{player.Name}'s Health updated to {player.Health}");
-    }
-
-    [Reducer]
-    public static void UpdateSpeed(ReducerContext ctx, int playerId, int amount)
-    {
-        var player = ctx.Db.Player.Id.Find(playerId);
-        if (player is null) { Log.Warn($"Player {playerId} not found!"); return; }
-        if (player.IsDead) { Log.Warn($"{player.Name} is dead. Speed cannot be changed."); return; }
-
-        player.Speed += amount;
-        ctx.Db.Player.Id.Update(player);
-        Log.Info($"{player.Name}'s Speed updated to {player.Speed}");
+        else
+        {
+            ctx.Db.Player.Id.Update(player);
+        }
     }
 
     [Reducer]
@@ -186,36 +174,6 @@ public static partial class Module
         ctx.Db.Player.Id.Update(player);
 
         // Log.Info($"{player.Name}'s Attack updated to {player.Attack}");
-    }
-
-
-    // ---------------- Player Projectiles ----------------
-    [Reducer]
-    public static void PlayerShoot(ReducerContext ctx, int playerId, float angleDeg, float speed)
-    {
-        var player = ctx.Db.Player.Id.Find(playerId);
-        if (player is null || player.IsDead) return;
-
-        // Convert angle to radians
-        float angleRad = angleDeg * (MathF.PI / 180f);
-
-        // Calculate velocity
-        float velocityX = MathF.Cos(angleRad) * speed;
-        float velocityY = MathF.Sin(angleRad) * speed;
-
-        // Insert projectile
-        ctx.Db.Projectile.Insert(new Module.Projectile
-        {
-            X = player.X,
-            Y = player.Y,
-            VelocityX = velocityX,
-            VelocityY = velocityY,
-            Damage = 10,
-            Angle = angleDeg,
-            FromEnemy = false
-        });
-
-        Log.Info($"Player (#{player.Id}) fired a projectile at angle {angleDeg}° with speed {speed}");
     }
 
 }
