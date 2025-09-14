@@ -5,10 +5,11 @@ import { Player } from "./logic/gameobjects/player";
 import { World } from "./logic/world";
 import { Vector2 } from "./utils/vector2";
 import { TheCore } from "./logic/gameobjects/the-core";
-import type { Player } from "./module_bindings";
+import type { Player as PlayerType } from "./module_bindings";
 import { EnemyTypeIds } from "./logic/gameobjects/enemies/enemyTypeIds";
-import { Spiker } from "./logic/gameobjects/enemies/spiker";
-import type { Entity } from "./logic/gameobjects/entity";
+import { Rusher } from "./logic/gameobjects/enemies/rusher";
+import { Entity } from "./logic/gameobjects/entity";
+import { Shooter } from "./logic/gameobjects/enemies/shooter";
 
 export const GeometryCore = (function () {
     return class GeometryCore {
@@ -75,7 +76,7 @@ export const GeometryCore = (function () {
                         return;
                     }
 
-                    const player = this.world.gameObjectLookup.get(newNetworkedPlayer.id) as InstanceType<typeof Player> | undefined;
+                    const player = this.world.playerLookup.get(newNetworkedPlayer.id) as InstanceType<typeof Player> | undefined;
 
                     if (player) {
                         player.loadState(newNetworkedPlayer);
@@ -99,22 +100,59 @@ export const GeometryCore = (function () {
                     this.world.spawn(player, networkedPlayer.id);
                 });
 
+                this.replicator.onPlayerDelete((ctx, networkedPlayer) => {
+                    if (this.world === null) return;
+
+                    const isLocalPlayer = networkedPlayer.identity.data === this.replicator.getIdentity()?.data;
+
+                    if (isLocalPlayer) {
+                        return;
+                    }
+
+                    const player = this.world.playerLookup.get(networkedPlayer.id) as InstanceType<typeof Player> | undefined;
+
+                    if (player) {
+                        this.world.despawn(player);
+                    }
+                });
+
                 this.replicator.onEnemyInsert((_, networkedEnemy) => {
                     if (!this.world) return;
                     let enemy: InstanceType<typeof Entity> | null = null;
 
                     switch (networkedEnemy.typeId) {
-                        case EnemyTypeIds.SPIKER:
-                            enemy = new Spiker();
+                        case EnemyTypeIds.RUSHER:
+                            enemy = new Rusher();
+                            break;
+                        case EnemyTypeIds.SHOOTER:
+                            enemy = new Shooter();
                             break;
                     }
 
                     if (enemy !== null) {
                         enemy.loadState(networkedEnemy);
-                        this.world.spawn(enemy, enemy.objectId);
-                        console.log('enemy')
+                        this.world.spawn(enemy, networkedEnemy.id);
                     } else {
-                        console.log("unknown enemy: ", networkedEnemy);
+                    }
+                });
+
+                this.replicator.onEnemyUpdate((ctx, _, networkedEnemy) => {
+                    if (this.world === null) return;
+
+                    const player = this.world.entityLookup.get(networkedEnemy.id) as InstanceType<typeof Entity> | undefined;
+
+                    if (player) {
+                        player.loadState(networkedEnemy);
+                    }
+                });
+
+                this.replicator.onEnemyDelete((_, networkedEnemy) => {
+                    if (this.world === null) return;
+
+                    const entity = this.world.entityLookup.get(networkedEnemy.id) as InstanceType<typeof Entity> | undefined;
+
+                    if (entity) {
+                        this.world.despawn(entity);
                     }
                 });
             });

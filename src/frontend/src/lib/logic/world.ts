@@ -6,6 +6,8 @@ import { Constants } from "../utils/constants.ts";
 import type { Replicator } from "../network/replicator.ts";
 import type { GameObject } from "./gameobjects/gameobject.ts";
 import type { Vector2 } from "../utils/vector2.ts";
+import { Player } from "./gameobjects/player.ts";
+import { Entity } from "./gameobjects/entity.ts";
 
 type InstanceVector2 = InstanceType<typeof Vector2>;
 type InstanceReplicator = InstanceType<typeof Replicator>;
@@ -22,7 +24,8 @@ export const World = (function () {
         camera: InstanceCamera;
         replicator: InstanceReplicator;
         visualEffects: any[];
-        gameObjectLookup: Map<number, InstanceGameObject>;
+        playerLookup: Map<number, InstanceGameObject>;
+        entityLookup: Map<number, InstanceGameObject>;
 
         constructor(worldSize: InstanceVector2, replicator: InstanceReplicator) {
             this.worldSize = worldSize;
@@ -30,7 +33,8 @@ export const World = (function () {
             this.physics = new Physics(worldSize);
             this.particleManager = new ParticleManager();
             this.camera = new Camera();
-            this.gameObjectLookup = new Map();
+            this.playerLookup = new Map();
+            this.entityLookup = new Map();
             this.replicator = replicator;
 
             this.visualEffects = [
@@ -51,7 +55,12 @@ export const World = (function () {
             this.gameObjects.push(gameObject);
             this.physics.add(gameObject.body);
             this.gameObjects.sort((a, z) => a.renderPriority - z.renderPriority);
-            this.gameObjectLookup.set(objectId, gameObject);
+
+            if (gameObject instanceof Player) {
+                this.playerLookup.set(objectId, gameObject);
+            } else if (gameObject instanceof Entity) {
+                this.entityLookup.set(objectId, gameObject);
+            }
 
             gameObject.onSpawn(this, objectId);
         }
@@ -66,7 +75,12 @@ export const World = (function () {
 
             this.gameObjects.splice(index, 1);
             this.physics.remove(gameObject.body);
-            this.gameObjectLookup.set(gameObject.objectId, gameObject);
+
+            if (gameObject instanceof Player) {
+                this.playerLookup.delete(gameObject.objectId);
+            } else if (gameObject instanceof Entity) {
+                this.entityLookup.delete(gameObject.objectId);
+            }
 
             gameObject.onDespawn();
         }

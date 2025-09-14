@@ -101,7 +101,7 @@ public static partial class Module
         world.Tick++;
         ctx.Db.World.Id.Update(world);
 
-        if (world.Tick == 5)
+        if (world.Tick % (60 * 10) == 0)
         {
             SpawnEnemy(ctx, EnemyTypeIds.SPIKER, 0, 0);
             // SpawnEnemy(ctx, EnemyTypeIds.SHOOTER, world.Width / 2, world.Height / 2);

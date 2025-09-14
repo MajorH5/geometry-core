@@ -3,13 +3,15 @@ import { Entity } from "./entity.ts";
 
 type Vector2Type = InstanceType<typeof Vector2>;
 
+const THE_CORE_HEALTH = 100;
+
 export const TheCore = (function () {
     return class TheCore extends Entity {
         time: number;
         healtbarOffset: number;
 
         constructor() {
-            super(100, {
+            super(THE_CORE_HEALTH, false, {
                 size: new Vector2(50, 50)
             });
 

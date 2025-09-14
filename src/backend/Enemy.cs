@@ -10,7 +10,7 @@ public static partial class Module
         public const int SHOOTER = 2;
         public const int BLASTER = 3;
     }
-    
+
     [SpacetimeDB.Type]
     public partial struct ProjectileInfo
     {
@@ -34,11 +34,12 @@ public static partial class Module
         public ProjectileInfo ProjectileInfo;
     }
 
-    public static long GenerateRandomLong()
+    public static int GenerateRandomInt()
     {
         Random rand = new Random();
-        return rand.NextInt64(1_000_000_000L, long.MaxValue);
+        return rand.Next(0, 1_000_000);
     }
+
 
     [Reducer]
     public static void InitEnemyTypes(ReducerContext ctx)
@@ -115,20 +116,49 @@ public static partial class Module
         [PrimaryKey]
         public int Id;
         public int TypeId;
-        public long ObjectId;
+        public int ObjectId;
+        public int MaxHealth;
         public int Health;
         public int Speed;
         public int Attack;
         public int AttackSpeed;
         public bool IsDead;
         public int NextShootTick;
-
+        public ProjectileInfo ProjectileInfo;
 
         // Position on grid
         public float X;
         public float Y;
     }
     // ---------------- Reducers ----------------
+
+    [Reducer]
+    public static void DamageEnemy(ReducerContext ctx, int enemyId)
+    {
+        var enemy = ctx.Db.Enemy.Id.Find(enemyId);
+
+        if (enemy is null) { Log.Warn($"Enemy {enemyId} not found!"); return; }
+        if (enemy.IsDead) { Log.Warn($"Enemy is dead and cannot move."); return; }
+
+        var player = ctx.Db.Player.Identity.Find(ctx.Sender);
+
+        if (player is null)
+        {
+            Log.Warn("cannot damage");
+            return;
+        }
+
+        enemy.Health -= player.ProjectileInfo.Damage;
+
+        if (enemy.Health <= 0)
+        {
+            ctx.Db.Enemy.Delete(enemy);
+        }
+        else
+        {
+            ctx.Db.Enemy.Id.Update(enemy);
+        }
+    }
 
     [Reducer]
     public static void SpawnEnemy(ReducerContext ctx, int typeId, float posX, float posY, int difficultyMultiplier = 1)
@@ -168,12 +198,13 @@ public static partial class Module
         var enemy = ctx.Db.Enemy.Insert(new Enemy
         {
             TypeId = typeId,
-            ObjectId = GenerateRandomLong(),
+            ObjectId = GenerateRandomInt(),
             Health = scaledHealth,
             Speed = scaledSpeed,
             Attack = 10,
             AttackSpeed = 10,
             IsDead = false,
+            ProjectileInfo = enemyType.ProjectileInfo,
             X = x,
             Y = y
         });

@@ -19,7 +19,7 @@ export const ProjectileInfo = (function () {
             this.damage = config.damage || 0;
             this.color = config.color || '#fffffff';
             this.spread = config.spread || 0;
-            this.rateOfFire = config.rateOffire || 0;
+            this.rateOfFire = config.rateOffire || 1;
         }
     }
 })();

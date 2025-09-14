@@ -26,9 +26,9 @@ export class Replicator {
                 this.conn = conn;
                 this.identity = identity;
                 this.connected = true;
-                
+
                 console.log(`Connected to SpacetimeDB with identity: ${identity.toHexString()}`);
-                
+
                 // Store auth token for reconnection
                 if (typeof localStorage !== 'undefined') {
                     localStorage.setItem('auth_token', token);
@@ -36,7 +36,7 @@ export class Replicator {
 
                 // allow handlers to bind first
                 resolve();
-                
+
                 // Subscribe to all tables to trigger ClientConnected reducer
                 this.subscribeToTables();
             };
@@ -54,10 +54,10 @@ export class Replicator {
             };
 
             // Get stored auth token
-            const authToken = typeof localStorage !== 'undefined' 
-                ? localStorage.getItem('auth_token') || '' 
+            const authToken = typeof localStorage !== 'undefined'
+                ? localStorage.getItem('auth_token') || ''
                 : '';
-                
+
             this.conn = DbConnection.builder()
                 .withUri(this.url)
                 .withModuleName(this.moduleName)
@@ -66,7 +66,7 @@ export class Replicator {
                 .onDisconnect(onDisconnect)
                 .onConnectError(onConnectError)
                 .build();
-            
+
         });
     }
 
@@ -90,6 +90,18 @@ export class Replicator {
     }
 
     // Reducer calls - using the correct conn.reducers API
+
+    public damageEnemy(enemyId: number): void {
+        if (!this.conn) throw new Error('Not connected');
+
+        try {
+            this.conn.reducers.damageEnemy(enemyId);
+        } catch (error) {
+            console.error('Failed to damage enemy:', error);
+            throw error;
+        }
+    }
+
     public movePlayer(playerId: number, newX: number, newY: number): void {
         if (!this.conn) throw new Error('Not connected');
 
@@ -99,7 +111,7 @@ export class Replicator {
         if (oldPosition && newPosition.equals(oldPosition)) {
             return;
         }
-        
+
         this.cache.set('LocalPlayerPosition', newPosition);
 
         try {
@@ -125,7 +137,7 @@ export class Replicator {
 
         this.cache.set('LocalPlayerIsFiring', isFiring);
         this.cache.set('LocalPlayerAttackAngle', attackAngle);
-        
+
         try {
             this.conn.reducers.updateAttack(playerId, isFiring, attackAngle);
         } catch (error) {
@@ -133,19 +145,7 @@ export class Replicator {
             throw error;
         }
     }
-
-    public async updateBulletCount(playerId: number, amount: number): Promise<void> {
-        if (!this.conn) throw new Error('Not connected');
-        
-        try {
-            await this.conn.reducers.updateBulletCount(playerId, amount);
-            console.log(`Updated player ${playerId} bullet count by ${amount}`);
-        } catch (error) {
-            console.error('Failed to update bullet count:', error);
-            throw error;
-        }
-    }
-
+    
     public getPlayers(): Player[] {
         if (!this.conn) return [];
         return Array.from(this.conn.db.player.iter());
@@ -157,43 +157,43 @@ export class Replicator {
     }
 
     public onPlayerInsert(callback: (ctx: any, player: Player) => void): () => void {
-        if (!this.conn) return () => {};
-        
+        if (!this.conn) return () => { };
+
         this.conn.db.player.onInsert(callback);
         return () => this.conn?.db.player.removeOnInsert(callback);
     }
 
     public onPlayerUpdate(callback: (ctx: any, oldPlayer: Player, newPlayer: Player) => void): () => void {
-        if (!this.conn) return () => {};
-        
+        if (!this.conn) return () => { };
+
         this.conn.db.player.onUpdate(callback);
         return () => this.conn?.db.player.removeOnUpdate(callback);
     }
 
     public onPlayerDelete(callback: (ctx: any, player: Player) => void): () => void {
-        if (!this.conn) return () => {};
-        
+        if (!this.conn) return () => { };
+
         this.conn.db.player.onDelete(callback);
         return () => this.conn?.db.player.removeOnDelete(callback);
     }
 
     public onEnemyInsert(callback: (ctx: any, enemy: Enemy) => void): () => void {
-        if (!this.conn) return () => {};
-        
+        if (!this.conn) return () => { };
+
         this.conn.db.enemy.onInsert(callback);
         return () => this.conn?.db.enemy.removeOnInsert(callback);
     }
 
     public onEnemyUpdate(callback: (ctx: any, oldEnemy: Enemy, newEnemy: Enemy) => void): () => void {
-        if (!this.conn) return () => {};
-        
+        if (!this.conn) return () => { };
+
         this.conn.db.enemy.onUpdate(callback);
         return () => this.conn?.db.enemy.removeOnUpdate(callback);
     }
 
     public onEnemyDelete(callback: (ctx: any, enemy: Enemy) => void): () => void {
-        if (!this.conn) return () => {};
-        
+        if (!this.conn) return () => { };
+
         this.conn.db.enemy.onDelete(callback);
         return () => this.conn?.db.enemy.removeOnDelete(callback);
     }

@@ -9,19 +9,20 @@ public static partial class Module
         [SpacetimeDB.AutoInc]
         [SpacetimeDB.PrimaryKey]
         public int Id;
-        public long ObjectId;
+        public int ObjectId;
         public string Name = "";
+        public int MaxHealth;
         public int Health;
         public int Speed;
         public bool IsFiring;
         public int AttackAngle;
-        public int BulletCount;
         public bool IsDead;
         public bool IsOnline;
 
         [SpacetimeDB.Unique]  // Each client gets only one Player
         public Identity Identity;
 
+        public ProjectileInfo ProjectileInfo;
 
         // Position
         public float X;
@@ -65,7 +66,6 @@ public static partial class Module
         player.Y = newY;
         ctx.Db.Player.Id.Update(player);
 
-        Log.Info($"{player.Name} moved to ({player.X}, {player.Y})");
     }
 
 
@@ -106,16 +106,26 @@ public static partial class Module
             {
                 Name = "PlayerGuy",
                 Identity = ctx.Sender,
-                ObjectId = GenerateRandomLong(),
+                ObjectId = GenerateRandomInt(),
                 Health = 100,
+                MaxHealth = 100,
                 Speed = 10,
                 IsFiring = false,
                 AttackAngle = 0,
-                BulletCount = 1,
                 IsDead = false,
                 IsOnline = true,
                 X = 0,
-                Y = 0
+                Y = 0,
+                ProjectileInfo = new ProjectileInfo
+                {
+                    Amount = 2,
+                    Speed = 6,
+                    Size = 30,
+                    Damage = 1000,
+                    Spread = 10,
+                    Color = "#ff0000",
+                    RateOfFire = 2,
+                }
             });
             Log.Info($"New player created for {ctx.Sender}");
         }
@@ -178,17 +188,6 @@ public static partial class Module
         // Log.Info($"{player.Name}'s Attack updated to {player.Attack}");
     }
 
-    [Reducer]
-    public static void UpdateBulletCount(ReducerContext ctx, int playerId, int amount)
-    {
-        var player = ctx.Db.Player.Id.Find(playerId);
-        if (player is null) { Log.Warn($"Player {playerId} not found!"); return; }
-        if (player.IsDead) { Log.Warn($"{player.Name} is dead. BulletCount cannot be changed."); return; }
-
-        player.BulletCount += amount;
-        ctx.Db.Player.Id.Update(player);
-        Log.Info($"{player.Name}'s BulletCount updated to {player.BulletCount}");
-    }
 
     // ---------------- Player Projectiles ----------------
     [Reducer]

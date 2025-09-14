@@ -21,4 +21,317 @@ canvas {
 
 body {
     overflow: hidden;
+    margin: 0;
+    padding: 0;
+    background: #f8f9fa;
+}
+
+/* Splash Screen Styles */
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+/* Grid Background */
+.grid-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.8) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.8) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.6;
+    animation: gridFloat 4s ease-in-out infinite alternate;
+}
+
+@keyframes gridFloat {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(10px, 5px); }
+}
+
+/* Logo Containers */
+.logo-container {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 200px;
+    height: 200px;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.logo-container.zoom-in {
+    opacity: 1;
+    transform: scale(1);
+    animation: logoGlow 1.5s ease-in-out infinite alternate;
+}
+
+.logo-container.fade-out {
+    opacity: 0;
+    transform: scale(1.2);
+}
+
+@keyframes logoGlow {
+    0% { filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); }
+    100% { filter: drop-shadow(0 0 20px rgba(255,255,255,0.8)); }
+}
+
+/* First Logo - Triangular Design */
+.geometric-logo {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.triangle {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+.triangle-1 {
+    border-left: 30px solid transparent;
+    border-right: 30px solid transparent;
+    border-bottom: 52px solid #fff;
+    top: 10px;
+    left: 30px;
+    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+    animation: triangleFloat1 2s ease-in-out infinite;
+}
+
+.triangle-2 {
+    border-left: 25px solid transparent;
+    border-right: 25px solid transparent;
+    border-bottom: 43px solid #f1f3f4;
+    top: 30px;
+    left: 10px;
+    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+    animation: triangleFloat2 2s ease-in-out infinite 0.3s;
+}
+
+.triangle-3 {
+    border-left: 25px solid transparent;
+    border-right: 25px solid transparent;
+    border-bottom: 43px solid #e8eaed;
+    top: 30px;
+    right: 10px;
+    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+    animation: triangleFloat3 2s ease-in-out infinite 0.6s;
+}
+
+.center-circle {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid #dee2e6;
+    top: 50px;
+    left: 50px;
+    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+    animation: centerPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes triangleFloat1 {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-5px); }
+}
+
+@keyframes triangleFloat2 {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    50% { transform: translateY(-3px) translateX(2px); }
+}
+
+@keyframes triangleFloat3 {
+    0%, 100% { transform: translateY(0px) translateX(0px); }
+    50% { transform: translateY(-3px) translateX(-2px); }
+}
+
+@keyframes centerPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Second Logo - Hexagonal Design */
+.geometric-logo-2 {
+    position: relative;
+    width: 140px;
+    height: 140px;
+}
+
+.hexagon {
+    width: 80px;
+    height: 80px;
+    background: #fff;
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    filter: drop-shadow(2px 2px 8px rgba(0,0,0,0.1));
+    animation: hexagonRotate 3s linear infinite;
+}
+
+.inner-shapes {
+    position: absolute;
+    top: 45px;
+    left: 45px;
+    width: 50px;
+    height: 50px;
+}
+
+.diamond {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #e9ecef;
+    transform: rotate(45deg);
+}
+
+.diamond-1 {
+    top: 5px;
+    left: 19px;
+    animation: diamondFloat1 2s ease-in-out infinite;
+}
+
+.diamond-2 {
+    top: 20px;
+    left: 8px;
+    animation: diamondFloat2 2s ease-in-out infinite 0.3s;
+}
+
+.diamond-3 {
+    top: 20px;
+    right: 8px;
+    animation: diamondFloat3 2s ease-in-out infinite 0.6s;
+}
+
+@keyframes hexagonRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes diamondFloat1 {
+    0%, 100% { transform: rotate(45deg) translateY(0px); }
+    50% { transform: rotate(45deg) translateY(-3px); }
+}
+
+@keyframes diamondFloat2 {
+    0%, 100% { transform: rotate(45deg) translateX(0px); }
+    50% { transform: rotate(45deg) translateX(2px); }
+}
+
+@keyframes diamondFloat3 {
+    0%, 100% { transform: rotate(45deg) translateX(0px); }
+    50% { transform: rotate(45deg) translateX(-2px); }
+}
+
+/* Floating Elements */
+.floating-elements {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.float-shape {
+    position: absolute;
+    opacity: 0.3;
+}
+
+.triangle-float {
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 26px solid #fff;
+    top: 20%;
+    left: 15%;
+    animation: floatUp 6s ease-in-out infinite;
+}
+
+.circle-float {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #f1f3f4;
+    top: 30%;
+    right: 20%;
+    animation: floatDown 5s ease-in-out infinite 1s;
+}
+
+.square-float {
+    width: 18px;
+    height: 18px;
+    background: #e8eaed;
+    transform: rotate(45deg);
+    bottom: 25%;
+    left: 25%;
+    animation: floatLeft 7s ease-in-out infinite 2s;
+}
+
+.diamond-float {
+    width: 16px;
+    height: 16px;
+    background: #dee2e6;
+    transform: rotate(45deg);
+    top: 60%;
+    right: 15%;
+    animation: floatRight 4s ease-in-out infinite 1.5s;
+}
+
+@keyframes floatUp {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(15deg); }
+}
+
+@keyframes floatDown {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(15px); }
+}
+
+@keyframes floatLeft {
+    0%, 100% { transform: rotate(45deg) translateX(0px); }
+    50% { transform: rotate(45deg) translateX(-10px); }
+}
+
+@keyframes floatRight {
+    0%, 100% { transform: rotate(45deg) translateX(0px); }
+    50% { transform: rotate(45deg) translateX(10px); }
+}
+
+@keyframes floatingElements {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .logo-container {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .geometric-logo {
+        width: 90px;
+        height: 90px;
+    }
+    
+    .geometric-logo-2 {
+        width: 110px;
+        height: 110px;
+    }
 }

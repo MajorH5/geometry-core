@@ -1,18 +1,18 @@
-import { Vector2 } from "../../../utils/vector2";
+import { Vector2 } from "../../../utils/vector2.ts";
 import { Entity } from "../entity.ts";
 
 type Vector2Type = InstanceType<typeof Vector2>;
 
-const SPIKER_HEALTH = 100;
+const RUSHER_HEALTH = 100;
 
-export const Spiker = (function () {
-    return class Spiker extends Entity {
+export const Rusher = (function () {
+    return class Rusher extends Entity {
         constructor() {
-            super(SPIKER_HEALTH, {
+            super(RUSHER_HEALTH, true, {
                 size: new Vector2(50, 50)
             });
             
-            this.name = 'Spiker';
+            this.name = 'Rusher';
         }
 
         render(context: any, offset: Vector2Type, scale: number): void {

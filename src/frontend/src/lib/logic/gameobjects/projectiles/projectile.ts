@@ -1,5 +1,6 @@
 import { GameObject } from "../gameobject";
 import { Vector2 } from "../../../utils/vector2";
+import { Entity } from "../entity";
 
 type Vector2Type = InstanceType<typeof Vector2>;
 
@@ -24,9 +25,30 @@ export const Projectile = (function () {
             });
 
             this.body.collision.listen((other: any) => {
+                if (!this.isSpawned) {
+                    return;
+                }
+                
                 const gameObject = other.getTag('gameobject');
 
                 if (other.solid || (gameObject && !(gameObject instanceof Projectile) && gameObject !== this.source)) {
+                    if (this.source instanceof Entity && gameObject instanceof Entity && this.source.hostile === gameObject.hostile) {
+                        return;
+                    }
+
+                    const replicator = this.world?.getReplicator();
+                    
+                    if (replicator) {
+                        if (this.source.hostile && !gameObject.hostile && gameObject.isLocalPlayer) {
+                            // local player hit, report this
+    
+                        } else if (this.source.isLocalPlayer && gameObject.hostile) {
+                            // we hit a bad guy
+                            console.log("enemy damaged")
+                            replicator.damageEnemy(gameObject.objectId);
+                        }
+                    }
+
                     this.despawn();
                     // hit smth
                 }

@@ -1,5 +1,6 @@
 export const EnemyTypeIds = (function () {
     return {
-        SPIKER: 1,
+        RUSHER: 1,
+        SHOOTER: 2,
     } as const;
 })();

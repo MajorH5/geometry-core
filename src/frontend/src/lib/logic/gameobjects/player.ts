@@ -10,6 +10,7 @@ const INPUT_RIGHT = 'right';
 const INPUT_UP = 'up';
 const INPUT_DOWN = 'down';
 
+const PLAYER_HEALTH = 100;
 const PLAYER_SPEED = 8.5;
 const PLAYER_VELOCITY_SMOOTHNESS = 0.175;
 
@@ -21,14 +22,10 @@ export const Player = (function () {
         mousePosition: Vector2Type;
         attackAngle: number;
         keys: { [key: string]: boolean };
-        lastAttack: number;
-        rateOfFire: number;
-        currentWeapon: any;
         playerName: string;
-        isFiring: boolean;
 
         constructor(isLocalPlayer: boolean = false, canvas: any) {
-            super(100, {
+            super(PLAYER_HEALTH, false, {
                 size: new Vector2(50, 50)
             })
 
@@ -39,16 +36,6 @@ export const Player = (function () {
             this.mousePosition = new Vector2(-1, -1);
             this.attackAngle = 0;
             this.keys = {};
-            
-            this.isFiring = false;
-            this.lastAttack = -Infinity;
-            this.rateOfFire = 1 / 3;
-            this.currentWeapon = new ProjectileInfo({
-                amount: 3,
-                speed: 9,
-                size: new Vector2(20, 20),
-                lifetime: 0.75
-            });
 
             if (this.isLocalPlayer) {
                 this.bindControls();
@@ -69,9 +56,7 @@ export const Player = (function () {
             }
         }
 
-        canFireProjectile(): boolean {
-            return this.isFiring && ((Date.now() - this.lastAttack) / 1000) >= this.rateOfFire;
-        }
+        
 
         bindControls(): void {
             document.addEventListener('keydown', (event) => {
@@ -206,11 +191,6 @@ export const Player = (function () {
                 this.updateMovementControls();
                 const attackDirection = this.getMouseDirection();
                 this.attackAngle = Math.atan2(attackDirection.y, attackDirection.x);
-            }
-
-            if (this.canFireProjectile() && this.currentWeapon !== null) {
-                this.emitProjectiles(this.attackAngle, this.currentWeapon);
-                this.lastAttack = Date.now();
             }
 
             // replicate to server
