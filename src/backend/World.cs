@@ -86,8 +86,8 @@ public static partial class Module
             IsDestroyed = false,
             Cost = 0,
             IsCore = true,
-            width = 50,
-            height = 50
+            width = 25,
+            height = 25
         });
 
         Log.Info("Core block created at (0,0) with 1000 HP");
@@ -100,6 +100,8 @@ public static partial class Module
 
         world.Tick++;
         ctx.Db.World.Id.Update(world);
+
+        Random rand = new Random();
 
         if (world.Tick % (60 * 4) == 0)
         {
@@ -119,129 +121,79 @@ public static partial class Module
         // }
 
         // --- Move and shoot enemies ---
+        // --- Move and shoot enemies ---
         foreach (var enemy in ctx.Db.Enemy.Iter())
         {
             if (enemy.IsDead) continue;
-            Attack(ctx, enemy.Id, true, 30);
-            // enemy.X += 0.1f;
-            // enemy.Y += 0.1f;
-            // ctx.Db.Enemy.Id.Update(enemy);
 
-            MoveEnemyTowardCore(ctx, enemy.Id, world.Width/2, world.Height/2);
+            // Check if this enemy is a SHOOTER type
+            if (enemy.TypeId == EnemyTypeIds.SHOOTER)
+            {
+                // Find the closest player to target
+                Player closestPlayer = null;
+                float closestDistance = float.MaxValue;
 
-            // // Initialize NextShootTick if first time
-            // if (enemy.NextShootTick == 0)
-            // {
-            //     enemy.NextShootTick = world.Tick + rand.Next(10, 30); // small delay after spawn
-            //     ctx.Db.Enemy.Id.Update(enemy);
-            //     continue;
-            // }
+                foreach (var player in ctx.Db.Player.Iter())
+                {
+                    if (player.IsDead || !player.IsOnline) continue;
 
-            // // Check if it's time to shoot
-            // if (world.Tick >= enemy.NextShootTick)
-            // {
-            //     bool spreadShot = rand.NextDouble() < 0.5;
+                    float dx = player.X - enemy.X;
+                    float dy = player.Y - enemy.Y;
+                    float distance = MathF.Sqrt(dx * dx + dy * dy);
 
-            //     if (spreadShot)
-            //     {
-            //         EnemySpreadShot(ctx, enemy.Id, 6, 0.5f + 0.01f * world.Tick); // speed scales with tick
-            //     }
-            //     else
-            //     {
-            //         EnemyShootAtClosestPlayer(ctx, enemy.Id, 0.5f + 0.01f * world.Tick);
-            //     }
+                    if (distance < closestDistance)
+                    {
+                        closestDistance = distance;
+                        closestPlayer = player;
+                    }
+                }
 
-            //     // Random delay until next shot
-            //     enemy.NextShootTick = world.Tick + rand.Next(10, 40);
-            //     ctx.Db.Enemy.Id.Update(enemy);
-            // }
+                // If we found a player to target
+                if (closestPlayer != null)
+                {
+                    // Calculate angle to target player
+                    float dx = closestPlayer.X - enemy.X;
+                    float dy = closestPlayer.Y - enemy.Y;
+
+                    // Calculate angle in degrees (0° = right, 90° = down, 180° = left, 270° = up)
+                    float angleRadians = MathF.Atan2(dy, dx);
+                    float angleDegrees = angleRadians * (180f / MathF.PI);
+
+                    // Normalize angle to 0-360 range
+                    if (angleDegrees < 0)
+                        angleDegrees += 360;
+
+                    // Add random spread of +/- 5 degrees
+                    float randomSpread = (float)(rand.NextDouble() * 10 - 5); // -5 to +5 degrees
+                    float finalAngle = angleDegrees + randomSpread;
+
+                    // Normalize final angle to 0-360 range
+                    if (finalAngle < 0)
+                        finalAngle += 360;
+                    else if (finalAngle >= 360)
+                        finalAngle -= 360;
+
+                    // Attack with calculated angle
+                    Attack(ctx, enemy.Id, true, (int)finalAngle);
+
+                    Log.Info($"Shooter enemy {enemy.Id} targeting player {closestPlayer.Id} at angle {finalAngle:F1}° (base: {angleDegrees:F1}°, spread: {randomSpread:F1}°)");
+                }
+                else
+                {
+                    // No players found, shoot at core or don't shoot
+                    Attack(ctx, enemy.Id, true, 0);
+                }
+            }
+            else
+            {
+                // For non-shooter enemies, use original logic (or don't attack)
+                // Attack(ctx, enemy.Id, true, 0); // Comment this out if only shooters should attack
+            }
+
+            // Move enemy toward core
+            MoveEnemyTowardCore(ctx, enemy.Id, world.Width / 2, world.Height / 2);
         }
 
-        // // --- Spawn new enemies based on wave ---
-        // if (world.Tick % (int)(1f / world.SpawnRate) == 0)
-        // {
-        //     for (int i = 0; i < world.CurrentWave; i++)
-        //     {
-        //         SpawnEnemy(ctx, 100 + world.Tick, 5 + world.Tick, 5 + world.Tick, 1);
-        //     }
-        // }
-
-        // // --- Update projectiles ---
-        // foreach (var projectile in ctx.Db.Projectile.Iter())
-        // {
-        //     // Move projectile
-        //     projectile.X += projectile.VelocityX;
-        //     projectile.Y += projectile.VelocityY;
-
-        //     // Enemy projectiles hitting players
-        //     if (projectile.FromEnemy)
-        //     {
-        //         foreach (var player in ctx.Db.Player.Iter())
-        //         {
-        //             if (player.IsDead) continue;
-
-        //             float dx = player.X - projectile.X;
-        //             float dy = player.Y - projectile.Y;
-
-        //             if (MathF.Sqrt(dx * dx + dy * dy) < 1.0f)
-        //             {
-        //                 player.Health -= projectile.Damage;
-        //                 if (player.Health <= 0)
-        //                 {
-        //                     player.Health = 0;
-        //                     player.IsDead = true;
-        //                     Log.Info($"Player (#{player.Id}) was killed by a projectile!");
-        //                 }
-        //                 ctx.Db.Player.Id.Update(player);
-
-        //                 // Remove projectile after hitting
-        //                 ctx.Db.Projectile.Id.Delete(projectile.Id);
-        //                 break;
-        //             }
-        //         }
-        //     }
-
-        //     // Player projectiles hitting enemies
-        //     if (!projectile.FromEnemy)
-        //     {
-        //         foreach (var enemy in ctx.Db.Enemy.Iter())
-        //         {
-        //             if (enemy.IsDead) continue;
-
-        //             float dx = enemy.X - projectile.X;
-        //             float dy = enemy.Y - projectile.Y;
-
-        //             if (MathF.Sqrt(dx * dx + dy * dy) < 1.0f) // collision radius
-        //             {
-        //                 enemy.Health -= projectile.Damage;
-        //                 if (enemy.Health <= 0)
-        //                 {
-        //                     enemy.Health = 0;
-        //                     enemy.IsDead = true;
-        //                     Log.Info($"Enemy (#{enemy.Id}) was killed by a player projectile!");
-        //                 }
-        //                 ctx.Db.Enemy.Id.Update(enemy);
-
-        //                 // Remove projectile after hitting
-        //                 ctx.Db.Projectile.Id.Delete(projectile.Id);
-        //                 break; // stop checking other enemies
-        //             }
-        //         }
-        //     }
-
-        //     // Remove projectile if out of bounds
-        //     if (MathF.Abs(projectile.X) > world.Width / 2 || MathF.Abs(projectile.Y) > world.Height / 2)
-        //     {
-        //         ctx.Db.Projectile.Id.Delete(projectile.Id);
-        //         continue;
-        //     }
-
-        //     // Update projectile in DB
-        //     ctx.Db.Projectile.Id.Update(projectile);
-        // }
-
-        // Log.Info($"World tick updated: {world.Tick}");
-        
     }
 
     // ////////////////////////////////////////////////////////////////////////////////
@@ -335,64 +287,120 @@ public static partial class Module
         float dx = targetX - enemy.X;
         float dy = targetY - enemy.Y;
         float dist = MathF.Sqrt(dx * dx + dy * dy);
-        if (dist < 0.1f)
-        {
-            Log.Info($"Enemy (#{enemy.Id}) reached the core!");
-            // Optionally, apply damage to core here
-            return;
-        }
 
-        // Normalize direction
+        // Normalize direction and calculate next position
         float stepX = (dx / dist) * enemy.Speed;
         float stepY = (dy / dist) * enemy.Speed;
-
         float nextX = enemy.X + stepX;
         float nextY = enemy.Y + stepY;
 
-        // // --- Check collisions ---
+        // --- CORE CHECK FIRST (using your working method) ---
+        float coreDistance = MathF.Sqrt((targetX - nextX) * (targetX - nextX) +
+                                       (targetY - nextY) * (targetY - nextY));
 
-        // // Blocks
-        // foreach (var block in ctx.Db.Block.Iter())
-        // {
-        //     if (!block.IsDestroyed &&
-        //         MathF.Abs(block.X - nextX) < 1 &&
-        //         MathF.Abs(block.Y - nextY) < 1)
-        //     {
-        //         DamageBlock(ctx, block.Id, enemy.Attack);
-        //         Log.Info($"Enemy (#{enemy.Id}) attacked block {block.Id} at ({block.X},{block.Y})");
-        //         enemy.IsDead = true;
-        //         ctx.Db.Enemy.Id.Update(enemy);
-        //         return;
-        //     }
-        // }
-
-        // // Players
-        // foreach (var player in ctx.Db.Player.Iter())
-        // {
-        //     if (player.IsDead) continue;
-        //     if (MathF.Sqrt((player.X - nextX) * (player.X - nextX) + (player.Y - nextY) * (player.Y - nextY)) < 1f)
-        //     {
-        //         player.Health -= enemy.Attack;
-        //         if (player.Health <= 0)
-        //         {
-        //             player.Health = 0;
-        //             player.IsDead = true;
-        //             Log.Info($"Player (#{player.Id}) killed by enemy!");
-        //         }
-        //         ctx.Db.Player.Id.Update(player);
-        //         enemy.IsDead = true;
-        //         ctx.Db.Enemy.Id.Update(enemy);
-        //         return;
-        //     }
-        // }
-
-        // Core
-        if (MathF.Sqrt((targetX - nextX) * (targetX - nextX) +
-                   (targetY - nextY) * (targetY - nextY)) < 1f)
+        if (coreDistance < 15f) // Increased from 1f to be more forgiving
         {
-            Log.Info($"Enemy (#{enemy.Id}) damaged the core!");
+            // Find and damage the core block
+            var coreBlock = ctx.Db.Block.Iter().FirstOrDefault(b => b.IsCore && !b.IsDestroyed);
+            if (coreBlock != null)
+            {
+                coreBlock.Health -= enemy.Health;
+                if (coreBlock.Health <= 0)
+                {
+                    coreBlock.Health = 0;
+                    coreBlock.IsDestroyed = true;
+                    Log.Info("Core destroyed! Game over!");
+                }
+                ctx.Db.Block.Id.Update(coreBlock);
+                Log.Info($"Enemy (#{enemy.Id}) dealt {enemy.Health} damage to the core! Core HP: {coreBlock.Health}");
+            }
+
+            // Delete enemy after hitting core
             ctx.Db.Enemy.Id.Delete(enemy.Id);
+            Log.Info($"Enemy (#{enemy.Id}) reached core and was deleted!");
             return;
+        }
+
+        // --- PLAYER COLLISION CHECK ---
+        foreach (var player in ctx.Db.Player.Iter())
+        {
+            if (player.IsDead || !player.IsOnline) continue;
+
+            float playerDist = MathF.Sqrt((player.X - nextX) * (player.X - nextX) +
+                                          (player.Y - nextY) * (player.Y - nextY));
+
+            if (playerDist < 45f) // Collision radius for player (adjust as needed)
+            {
+                Log.Info($"Enemy (#{enemy.Id}) collided with player {player.Id} at distance {playerDist:F2}");
+
+                // Damage the player using enemy's attack power
+                player.Health -= enemy.Health;
+                if (player.Health <= 0)
+                {
+                    player.Health = 1; // Your system sets health to 1 instead of killing
+                    Log.Info($"Player (#{player.Id}) health reduced to 1 by enemy (#{enemy.Id})!");
+                }
+                ctx.Db.Player.Id.Update(player);
+
+                // Enemy always dies when hitting a player (like your original logic)
+                ctx.Db.Enemy.Id.Delete(enemy.Id);
+                Log.Info($"Enemy (#{enemy.Id}) destroyed after hitting player {player.Id}");
+                return;
+            }
+        }
+
+
+        // --- BLOCK COLLISION CHECK (for non-core blocks) ---
+        foreach (var block in ctx.Db.Block.Iter())
+        {
+            if (block.IsDestroyed || block.IsCore) continue; // Skip destroyed blocks and core (handled above)
+
+            float blockDist = MathF.Sqrt((block.X - nextX) * (block.X - nextX) +
+                                         (block.Y - nextY) * (block.Y - nextY));
+
+            if (blockDist < (block.width / 2f) + 2f) // Added small buffer
+            {
+                // Regular block collision logic
+                if (block.Health >= enemy.Health)
+                {
+                    // Block survives, enemy dies
+                    block.Health -= enemy.Health;
+                    if (block.Health <= 0)
+                    {
+                        block.Health = 0;
+                        block.IsDestroyed = true;
+                        Log.Info($"Block {block.Id} destroyed at ({block.X}, {block.Y})");
+                    }
+                    ctx.Db.Block.Id.Update(block);
+
+                    ctx.Db.Enemy.Id.Delete(enemy.Id);
+                    Log.Info($"Enemy (#{enemy.Id}) destroyed by block {block.Id} (block HP ≥ enemy HP)");
+                    return;
+                }
+                else
+                {
+                    // Enemy survives, block destroyed
+                    enemy.Health -= block.Health;
+                    if (enemy.Health <= 0)
+                    {
+                        enemy.Health = 0;
+                        enemy.IsDead = true;
+                        ctx.Db.Enemy.Id.Update(enemy);
+                        Log.Info($"Enemy (#{enemy.Id}) killed in clash with block {block.Id}!");
+                        return;
+                    }
+                    else
+                    {
+                        ctx.Db.Enemy.Id.Update(enemy);
+                        Log.Info($"Enemy (#{enemy.Id}) survived after destroying block {block.Id}");
+                    }
+
+                    block.Health = 0;
+                    block.IsDestroyed = true;
+                    ctx.Db.Block.Id.Update(block);
+                    return;
+                }
+            }
         }
 
         // Move enemy if no collision
@@ -400,7 +408,11 @@ public static partial class Module
         enemy.Y = nextY;
         ctx.Db.Enemy.Id.Update(enemy);
 
-        // Log.Info($"Enemy (#{enemy.Id}) moved to ({enemy.X}, {enemy.Y})");
+        // Debug logging
+        if (enemy.Id % 100 == 0) // Log every 100th update to avoid spam
+        {
+            Log.Info($"Enemy (#{enemy.Id}) at ({enemy.X:F1}, {enemy.Y:F1}), distance to core: {coreDistance:F1}");
+        }
     }
 
     // Note: You'll need to implement these methods that are referenced in UpdateWorldTick:
