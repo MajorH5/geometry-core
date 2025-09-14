@@ -36,8 +36,8 @@ public static partial class Module
         var world = new World
         {
             Id = 1,
-            Width = 1500,
-            Height = 1500,
+            Width = 4500,
+            Height = 4500,
             IsActive = true,
             Tick = 0,
             CurrentWave = 1,
@@ -103,32 +103,141 @@ public static partial class Module
 
         Random rand = new Random();
 
-        if (world.Tick % (60 * 4) == 0)
+        if (world.Tick % (60 * 15) == 5)
         {
-            SpawnEnemy(ctx, EnemyTypeIds.SPIKER, 0, 0);
-            SpawnEnemy(ctx, EnemyTypeIds.SHOOTER, world.Width - 100, world.Height - 100);
-            SpawnEnemy(ctx, EnemyTypeIds.BLASTER, world.Width - 100, 0);
-            SpawnEnemy(ctx, EnemyTypeIds.TANK, 0, world.Height - 100);
+            world.CurrentWave += 1;
+
+            // Calculate number of enemies for this wave: ceil(currentwave^1.5)
+            int enemyCount = (int)Math.Ceiling(Math.Pow(world.CurrentWave, 1));
+            // Heal and upgrade all players for the new wave
+            foreach (var player in ctx.Db.Player.Iter())
+            {
+                if (!player.IsOnline) continue;
+
+                // Heal 10% of max HP
+                int healAmount = (int)(player.MaxHealth * 0.1f);
+                player.Health = Math.Min(player.MaxHealth, player.Health + healAmount);
+
+                // Randomly choose one upgrade (equal chance for each)
+                int upgradeChoice = rand.Next(0, 8); // 0-7 for 8 different upgrades
+
+                switch (upgradeChoice)
+                {
+                    case 0: // Increase player speed
+                        player.Speed = (int)Math.Ceiling(player.Speed * 1.1f);
+                        Log.Info($"Player {player.Id} speed increased to {player.Speed}");
+                        break;
+                    case 1: // Increase player max HP
+                        player.MaxHealth = (int)Math.Ceiling(player.MaxHealth * 1.1f);
+                        Log.Info($"Player {player.Id} max HP increased to {player.MaxHealth}");
+                        break;
+                    case 2: // Increase projectile speed
+                        player.ProjectileInfo.Speed = (int)Math.Ceiling(player.ProjectileInfo.Speed * 1.1f);
+                        Log.Info($"Player {player.Id} projectile speed increased to {player.ProjectileInfo.Speed}");
+                        break;
+                    case 3: // Increase projectile amount
+                        player.ProjectileInfo.Amount = (int)Math.Ceiling(player.ProjectileInfo.Amount * 1.1f);
+                        Log.Info($"Player {player.Id} projectile amount increased to {player.ProjectileInfo.Amount}");
+                        break;
+                    case 4: // Increase projectile damage
+                        player.ProjectileInfo.Damage = (int)Math.Ceiling(player.ProjectileInfo.Damage * 1.1f);
+                        Log.Info($"Player {player.Id} projectile damage increased to {player.ProjectileInfo.Damage}");
+                        break;
+                    case 5: // Increase rate of fire
+                        player.ProjectileInfo.RateOfFire = (int)Math.Ceiling(player.ProjectileInfo.RateOfFire * 1.1f);
+                        Log.Info($"Player {player.Id} rate of fire increased to {player.ProjectileInfo.RateOfFire}");
+                        break;
+                    case 6: // Increase projectile size
+                        player.ProjectileInfo.Size = (int)Math.Ceiling(player.ProjectileInfo.Size * 1.1f);
+                        Log.Info($"Player {player.Id} projectile size increased to {player.ProjectileInfo.Size}");
+                        break;
+                    case 7: // Increase player speed (duplicate for equal chance)
+                        player.Speed = (int)Math.Ceiling(player.Speed * 1.1f);
+                        Log.Info($"Player {player.Id} speed increased to {player.Speed}");
+                        break;
+                }
+
+                ctx.Db.Player.Id.Update(player);
+                Log.Info($"Player {player.Id} healed {healAmount} HP (now {player.Health}/{player.MaxHealth})");
+            }
+
+            Log.Info($"Wave {world.CurrentWave} starting! Spawning {enemyCount} enemies");
+
+            for (int i = 0; i < enemyCount; i++)
+            {
+                // Determine enemy type with weighted probability
+                int randomEnemyType;
+                double spawnChance = rand.NextDouble(); // 0.0 to 1.0
+
+                if (spawnChance < 0.15) // 15% chance for Tank
+                {
+                    randomEnemyType = EnemyTypeIds.TANK;
+                }
+                else // 85% chance split equally between the other 3 types (28.33% each)
+                {
+                    double normalizedChance = (spawnChance - 0.15) / 0.85; // Normalize to 0-1 range
+
+                    if (normalizedChance < 0.333) // ~28.33% of total
+                    {
+                        randomEnemyType = EnemyTypeIds.SPIKER;
+                    }
+                    else if (normalizedChance < 0.666) // ~28.33% of total  
+                    {
+                        randomEnemyType = EnemyTypeIds.SHOOTER;
+                    }
+                    else // ~28.33% of total
+                    {
+                        randomEnemyType = EnemyTypeIds.BLASTER;
+                    }
+                }
+
+                // Spawn at random position on world border
+                float spawnX, spawnY;
+                int edge = rand.Next(0, 4); // 0=left, 1=right, 2=top, 3=bottom
+
+                switch (edge)
+                {
+                    case 0: // Left edge
+                        spawnX = 0;
+                        spawnY = rand.Next(0, world.Height);
+                        break;
+                    case 1: // Right edge
+                        spawnX = world.Width;
+                        spawnY = rand.Next(0, world.Height);
+                        break;
+                    case 2: // Top edge
+                        spawnX = rand.Next(0, world.Width);
+                        spawnY = 0;
+                        break;
+                    case 3: // Bottom edge
+                        spawnX = rand.Next(0, world.Width);
+                        spawnY = world.Height;
+                        break;
+                    default:
+                        spawnX = 0;
+                        spawnY = 0;
+                        break;
+                }
+
+                SpawnEnemy(ctx, randomEnemyType, spawnX, spawnY);
+
+                string enemyTypeName = randomEnemyType == EnemyTypeIds.SPIKER ? "SPIKER" :
+                                     randomEnemyType == EnemyTypeIds.SHOOTER ? "SHOOTER" :
+                                     randomEnemyType == EnemyTypeIds.BLASTER ? "BLASTER" : "TANK";
+                Log.Info($"Spawned {enemyTypeName} at ({spawnX}, {spawnY}) on edge {edge}");
+            }
+
+            // Update world with new wave
+            ctx.Db.World.Id.Update(world);
         }
 
-        // Random rand = new Random();
-
-        // if (world.Tick % world.SpawnRate == 0)
-        // {
-        //     for (int i = 0; i < world.CurrentWave; i++)
-        //     {
-        //         SpawnEnemy(ctx, 100 + world.Tick, 5 + world.Tick, 5 + world.Tick, 1);
-        //     }
-        // }
-
-        // --- Move and shoot enemies ---
         // --- Move and shoot enemies ---
         foreach (var enemy in ctx.Db.Enemy.Iter())
         {
             if (enemy.IsDead) continue;
 
             // Check if this enemy is a SHOOTER type
-            if (enemy.TypeId == EnemyTypeIds.SHOOTER)
+            if (enemy.TypeId == EnemyTypeIds.SHOOTER || enemy.TypeId == EnemyTypeIds.TANK || enemy.TypeId == EnemyTypeIds.BLASTER)
             {
                 // Find the closest player to target
                 Player closestPlayer = null;
@@ -177,7 +286,6 @@ public static partial class Module
                     // Attack with calculated angle
                     Attack(ctx, enemy.Id, true, (int)finalAngle);
 
-                    Log.Info($"Shooter enemy {enemy.Id} targeting player {closestPlayer.Id} at angle {finalAngle:F1}° (base: {angleDegrees:F1}°, spread: {randomSpread:F1}°)");
                 }
                 else
                 {
@@ -187,20 +295,16 @@ public static partial class Module
             }
             else
             {
-                // For non-shooter enemies, use original logic (or don't attack)
-                // Attack(ctx, enemy.Id, true, 0); // Comment this out if only shooters should attack
             }
 
             // Move enemy toward core
-            MoveEnemyTowardCore(ctx, enemy.Id, world.Width / 2, world.Height / 2);
+            MoveEnemyTowardCore(ctx, enemy.Id);
         }
 
     }
 
     // ////////////////////////////////////////////////////////////////////////////////
-    // /// 
     // ///                BLOCKS
-    // /// 
     // //////////////////////////////////////////////////////////////////////////////////
 
     [Table(Name = "Block", Public = true)]
@@ -277,13 +381,16 @@ public static partial class Module
     }
 
     [Reducer]
-    public static void MoveEnemyTowardCore(ReducerContext ctx, int enemyId, int centerX, int centerY)
+    public static void MoveEnemyTowardCore(ReducerContext ctx, int enemyId)
     {
         var enemy = ctx.Db.Enemy.Id.Find(enemyId);
         if (enemy is null || enemy.IsDead) return;
 
-        float targetX = centerX;
-        float targetY = centerY;
+        var world = ctx.Db.World.Id.Find(1);
+        if (world is null) return;
+
+        float targetX = world.Width/2f;
+        float targetY = world.Height/2f;
 
         float dx = targetX - enemy.X;
         float dy = targetY - enemy.Y;
@@ -408,16 +515,5 @@ public static partial class Module
         enemy.X = nextX;
         enemy.Y = nextY;
         ctx.Db.Enemy.Id.Update(enemy);
-
-        // Debug logging
-        if (enemy.Id % 100 == 0) // Log every 100th update to avoid spam
-        {
-            Log.Info($"Enemy (#{enemy.Id}) at ({enemy.X:F1}, {enemy.Y:F1}), distance to core: {coreDistance:F1}");
-        }
     }
-
-    // Note: You'll need to implement these methods that are referenced in UpdateWorldTick:
-    // - EnemySpreadShot(ctx, enemyId, bulletCount, speed)
-    // - EnemyShootAtClosestPlayer(ctx, enemyId, speed)
-    // And ensure the Enemy and Projectile tables are defined elsewhere in your module.
 }

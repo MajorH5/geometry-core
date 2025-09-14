@@ -56,7 +56,7 @@ public static partial class Module
         ctx.Db.EnemyType.Insert(new EnemyType
         {
             TypeId = EnemyTypeIds.SPIKER,
-            MaxHealth = 100,
+            MaxHealth = 15,
             Speed = 5,
             Size = 80,
             ProjectileInfo = new ProjectileInfo
@@ -86,46 +86,46 @@ public static partial class Module
                 Damage = 20,
                 Spread = 360 / 4,
                 Color = "#ff0000",
-                RateOfFire = 5,
-                Lifetime = 2,
+                RateOfFire = 1,
+                Lifetime = 10,
             }
         });
 
         ctx.Db.EnemyType.Insert(new EnemyType
         {
             TypeId = EnemyTypeIds.BLASTER,
-            MaxHealth = 50,
+            MaxHealth = 40,
             Speed = 2,
             Size = 40,
             ProjectileInfo = new ProjectileInfo
             {
-                Amount = 10,
-                Speed = 4,
+                Amount = 1,
+                Speed = 8,
                 Size = 20,
                 Damage = 10,
                 Spread = 10,
                 Color = "#18046fff",
                 RateOfFire = 1,
-                Lifetime = 1
+                Lifetime = 20
             }
         });
 
         ctx.Db.EnemyType.Insert(new EnemyType
         {
             TypeId = EnemyTypeIds.TANK,
-            MaxHealth = 500,
+            MaxHealth = 70,
             Speed = 1,
             Size = 40,
             ProjectileInfo = new ProjectileInfo
             {
-                Amount = 10,
-                Speed = 4,
+                Amount = 1,
+                Speed = 20,
                 Size = 20,
-                Damage = 10,
-                Spread = 10,
-                Color = "#18046fff",
+                Damage = 100,
+                Spread = 1,
+                Color = "#000000ff",
                 RateOfFire = 1,
-                Lifetime = 1
+                Lifetime = 10
             }
         });
 

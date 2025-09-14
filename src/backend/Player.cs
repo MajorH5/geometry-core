@@ -99,7 +99,7 @@ public static partial class Module
         {
             player.IsOnline = true;
             player.X = world.Width / 2;
-            player.Y = world.Height / 2 + 100;
+            player.Y = world.Height / 2;
             ctx.Db.Player.Identity.Update(player);
             Log.Info($"{player.Name} reconnected.");
         }
@@ -110,24 +110,24 @@ public static partial class Module
                 Name = "Player",
                 Identity = ctx.Sender,
                 ObjectId = GenerateRandomInt(),
-                Health = 1000000,
-                MaxHealth = 1000000,
+                Health = 1000,
+                MaxHealth = 1000,
                 Speed = 10,
                 IsFiring = false,
                 AttackAngle = 0,
                 IsDead = false,
                 IsOnline = true,
                 X = world.Width / 2,
-                Y = world.Height / 2 + 100,
+                Y = world.Height / 2,
                 ProjectileInfo = new ProjectileInfo
                 {
-                    Amount = 2,
+                    Amount = 1,
                     Speed = 10,
                     Size = 25,
                     Damage = 10,
                     Spread = 10,
-                    Color = "#00B2E1",
-                    RateOfFire = 4,
+                    Color = "#00e116ff",
+                    RateOfFire = 1,
                     Lifetime = 1,
                 }
             });
