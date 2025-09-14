@@ -50,7 +50,7 @@ export class GameHUD {
                     
                     <div class="player-details">
                         <div class="player-name" id="playerName"><b>${this.playerName}</b></div>
-                        <div class="player-level"><b>LVL ${this.level}</b></div>
+                        <div class="player-level" id="playerLevel"><b>LVL ${this.level}</b></div>
                         
                         <div class="health-container">
                             <div class="stat-bar health-bar">
@@ -383,7 +383,7 @@ export class GameHUD {
 
         if (stats.level !== undefined) {
             this.level = stats.level;
-            this.updateElement('player-level', `LVL ${this.level}`);
+            this.updateElement('playerLevel', `LVL ${this.level}`);
         }
 
         if (stats.experience !== undefined) {
