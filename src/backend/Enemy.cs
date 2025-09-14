@@ -76,7 +76,7 @@ public static partial class Module
         {
             TypeId = EnemyTypeIds.SHOOTER,
             MaxHealth = 35,
-            Speed = 3,
+            Speed = 1,
             Size = 40,
             ProjectileInfo = new ProjectileInfo
             {
@@ -95,7 +95,7 @@ public static partial class Module
         {
             TypeId = EnemyTypeIds.BLASTER,
             MaxHealth = 40,
-            Speed = 2,
+            Speed = 1,
             Size = 40,
             ProjectileInfo = new ProjectileInfo
             {

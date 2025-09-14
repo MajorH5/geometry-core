@@ -119,7 +119,7 @@ public static partial class Module
                 player.Health = Math.Min(player.MaxHealth, player.Health + healAmount);
 
                 // Randomly choose one upgrade (equal chance for each)
-                int upgradeChoice = rand.Next(0, 8); // 0-7 for 8 different upgrades
+                int upgradeChoice = rand.Next(0, 9); // 0-7 for 8 different upgrades
 
                 switch (upgradeChoice)
                 {
@@ -128,23 +128,26 @@ public static partial class Module
                         Log.Info($"Player {player.Id} speed increased to {player.Speed}");
                         break;
                     case 1: // Increase player max HP
-                        player.MaxHealth = (int)Math.Ceiling(player.MaxHealth * 1.1f);
+                        player.MaxHealth = (int)Math.Ceiling(player.MaxHealth * 1.2f);
                         Log.Info($"Player {player.Id} max HP increased to {player.MaxHealth}");
                         break;
                     case 2: // Increase projectile speed
                         player.ProjectileInfo.Speed = (int)Math.Ceiling(player.ProjectileInfo.Speed * 1.1f);
+                        player.ProjectileInfo.Lifetime = (int)Math.Ceiling(player.ProjectileInfo.Lifetime * 1.1f);
                         Log.Info($"Player {player.Id} projectile speed increased to {player.ProjectileInfo.Speed}");
                         break;
                     case 3: // Increase projectile amount
                         player.ProjectileInfo.Amount = (int)Math.Ceiling(player.ProjectileInfo.Amount * 1.1f);
+                        player.ProjectileInfo.Lifetime = (int)Math.Ceiling(player.ProjectileInfo.Lifetime * 1.1f);
                         Log.Info($"Player {player.Id} projectile amount increased to {player.ProjectileInfo.Amount}");
                         break;
                     case 4: // Increase projectile damage
-                        player.ProjectileInfo.Damage = (int)Math.Ceiling(player.ProjectileInfo.Damage * 1.1f);
+                        player.ProjectileInfo.Damage = (int)Math.Ceiling(player.ProjectileInfo.Damage * 1.5f);
                         Log.Info($"Player {player.Id} projectile damage increased to {player.ProjectileInfo.Damage}");
                         break;
                     case 5: // Increase rate of fire
                         player.ProjectileInfo.RateOfFire = (int)Math.Ceiling(player.ProjectileInfo.RateOfFire * 1.1f);
+                        player.ProjectileInfo.Lifetime = (int)Math.Ceiling(player.ProjectileInfo.Lifetime * 1.1f);
                         Log.Info($"Player {player.Id} rate of fire increased to {player.ProjectileInfo.RateOfFire}");
                         break;
                     case 6: // Increase projectile size
@@ -224,7 +227,53 @@ public static partial class Module
                 string enemyTypeName = randomEnemyType == EnemyTypeIds.SPIKER ? "SPIKER" :
                                      randomEnemyType == EnemyTypeIds.SHOOTER ? "SHOOTER" :
                                      randomEnemyType == EnemyTypeIds.BLASTER ? "BLASTER" : "TANK";
-                Log.Info($"Spawned {enemyTypeName} at ({spawnX}, {spawnY}) on edge {edge}");
+                // Log.Info($"Spawned {enemyTypeName} at ({spawnX}, {spawnY}) on edge {edge}");
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                // Pick random enemy type
+                var allEnemyTypes = ctx.Db.EnemyType.Iter().ToList();
+                if (allEnemyTypes.Count == 0) break;
+
+                var enemyType = allEnemyTypes[rand.Next(allEnemyTypes.Count)];
+
+                if (enemyType.TypeId == EnemyTypeIds.SPIKER)
+                {
+                    // Spiker: Speed only
+                    enemyType.Speed = (int)Math.Ceiling(enemyType.Speed * 1.1f);
+                    Log.Info($"[Buff #{i + 1}] Spiker speed increased to {enemyType.Speed}");
+                }
+                else
+                {
+                    // Non-spikers: choose random buff
+                    int upgradeChoice = rand.Next(0, 5); // 0-4
+                    switch (upgradeChoice)
+                    {
+                        case 0: // MaxHealth
+                            enemyType.MaxHealth = (int)Math.Ceiling(enemyType.MaxHealth * 1.2f);
+                            Log.Info($"[Buff #{i + 1}] EnemyType {enemyType.TypeId} MaxHealth -> {enemyType.MaxHealth}");
+                            break;
+                        case 1: // Projectile Speed
+                            enemyType.ProjectileInfo.Speed = (int)Math.Ceiling(enemyType.ProjectileInfo.Speed * 1.1f);
+                            Log.Info($"[Buff #{i + 1}] EnemyType {enemyType.TypeId} Projectile Speed -> {enemyType.ProjectileInfo.Speed}");
+                            break;
+                        case 2: // Projectile Amount
+                            enemyType.ProjectileInfo.Amount = (int)Math.Ceiling(enemyType.ProjectileInfo.Amount * 1.1f);
+                            Log.Info($"[Buff #{i + 1}] EnemyType {enemyType.TypeId} Projectile Amount -> {enemyType.ProjectileInfo.Amount}");
+                            break;
+                        case 3: // Projectile Damage
+                            enemyType.ProjectileInfo.Damage = (int)Math.Ceiling(enemyType.ProjectileInfo.Damage * 1.5f);
+                            Log.Info($"[Buff #{i + 1}] EnemyType {enemyType.TypeId} Projectile Damage -> {enemyType.ProjectileInfo.Damage}");
+                            break;
+                        case 4: // Rate of Fire
+                            enemyType.ProjectileInfo.RateOfFire = (int)Math.Ceiling(enemyType.ProjectileInfo.RateOfFire * 1.1f);
+                            Log.Info($"[Buff #{i + 1}] EnemyType {enemyType.TypeId} RoF -> {enemyType.ProjectileInfo.RateOfFire}");
+                            break;
+                    }
+                }
+
+                ctx.Db.EnemyType.TypeId.Update(enemyType);
             }
 
             // Update world with new wave
@@ -422,12 +471,12 @@ public static partial class Module
                     Log.Info("Core destroyed! Game over!");
                 }
                 ctx.Db.Block.Id.Update(coreBlock);
-                Log.Info($"Enemy (#{enemy.Id}) dealt {enemy.Health} damage to the core! Core HP: {coreBlock.Health}");
+                // Log.Info($"Enemy (#{enemy.Id}) dealt {enemy.Health} damage to the core! Core HP: {coreBlock.Health}");
             }
 
             // Delete enemy after hitting core
             ctx.Db.Enemy.Id.Delete(enemy.Id);
-            Log.Info($"Enemy (#{enemy.Id}) reached core and was deleted!");
+            // Log.Info($"Enemy (#{enemy.Id}) reached core and was deleted!");
             return;
         }
 
@@ -441,7 +490,7 @@ public static partial class Module
 
             if (playerDist < 45f) // Collision radius for player (adjust as needed)
             {
-                Log.Info($"Enemy (#{enemy.Id}) collided with player {player.Id} at distance {playerDist:F2}");
+                // Log.Info($"Enemy (#{enemy.Id}) collided with player {player.Id} at distance {playerDist:F2}");
 
                 // Damage the player using enemy's attack power
                 player.Health -= enemy.Health;
@@ -454,7 +503,7 @@ public static partial class Module
 
                 // Enemy always dies when hitting a player (like your original logic)
                 ctx.Db.Enemy.Id.Delete(enemy.Id);
-                Log.Info($"Enemy (#{enemy.Id}) destroyed after hitting player {player.Id}");
+                // Log.Info($"Enemy (#{enemy.Id}) destroyed after hitting player {player.Id}");
                 return;
             }
         }
@@ -484,7 +533,7 @@ public static partial class Module
                     ctx.Db.Block.Id.Update(block);
 
                     ctx.Db.Enemy.Id.Delete(enemy.Id);
-                    Log.Info($"Enemy (#{enemy.Id}) destroyed by block {block.Id} (block HP ≥ enemy HP)");
+                    // Log.Info($"Enemy (#{enemy.Id}) destroyed by block {block.Id} (block HP ≥ enemy HP)");
                     return;
                 }
                 else
@@ -496,13 +545,13 @@ public static partial class Module
                         enemy.Health = 0;
                         enemy.IsDead = true;
                         ctx.Db.Enemy.Id.Update(enemy);
-                        Log.Info($"Enemy (#{enemy.Id}) killed in clash with block {block.Id}!");
+                        // Log.Info($"Enemy (#{enemy.Id}) killed in clash with block {block.Id}!");
                         return;
                     }
                     else
                     {
                         ctx.Db.Enemy.Id.Update(enemy);
-                        Log.Info($"Enemy (#{enemy.Id}) survived after destroying block {block.Id}");
+                        // Log.Info($"Enemy (#{enemy.Id}) survived after destroying block {block.Id}");
                     }
 
                     block.Health = 0;
